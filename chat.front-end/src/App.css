@@ -1,0 +1,31 @@
+.user-container {
+  background-color: #313131;
+  color: white;
+}
+
+h6 {
+  color: greenyellow;
+}
+h2 {
+  color: #313131;
+}
+
+.message{
+  background-color: skyblue;
+  color: black;
+  padding: 2px 12px 12px 2px;
+}
+
+.user {
+  font-style: italic;
+  font-weight: bold;
+  font-size: small;
+}
+
+.message-container{
+  height: 440px;
+}
+
+.app {
+  width: 100%;
+}
