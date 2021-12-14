@@ -3,19 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using NHibernate;
+using NHibernate.Cfg;
 using server.Models;
-using server.DatabaseManagement;
+using Npgsql; //new
+using server; //new
+
+//using server.DatabaseManagement;
 
 namespace server.Hubs
 {
     public class ChatHub : Hub
     {
+        //NHibernate
+        private Configuration myConfiguration;
+        private ISessionFactory mySessionFactory;
+        private ISession mySession;
 
+        //Server
         private readonly IDictionary<string, UserConnection> _connections;
         private readonly string _botUser;
 
         public ChatHub(IDictionary<string, UserConnection> connections)
         {
+            //NHibernate
+            myConfiguration = new Configuration();
+            //myConfiguration.AddAssembly(typeof(Message).Assembly); //NEW
+            myConfiguration.Configure();
+            mySessionFactory = myConfiguration.BuildSessionFactory();
+            //mySession = mySessionFactory.OpenSession(); // unsafe
+
+            //Server
             _botUser = "ChatBot";
             _connections = connections;
         }
@@ -46,20 +64,59 @@ namespace server.Hubs
                 };
             }
 
-            try
+            await Clients.All.SendAsync("ReceiveMessage", userConnection.User, message);
+            
+            Exception error1;
+            
+            using (mySession = mySessionFactory.OpenSession())
             {
-                using (var db = new Database())
+                Message loMessage = new Message
                 {
-                    db.InsertNewMessage(userConnection, message);
+                    Text = message,
+                    User = userConnection.User,
+                    Room = userConnection.Room
+                };
+
+                try
+                {
+                    mySession.Save(loMessage); //exception
+                    mySession.Flush(); // New
+                    mySession.GetCurrentTransaction().Commit(); // Is this necessary?
+                }
+                catch (Exception e)
+                {
+                    error1 = e;
                 }
             }
-            catch (Exception e)
+
+            Exception error2;
+
+            using (var con = new NpgsqlConnection("Server=127.0.0.1;Port=5432;Username=postgres;Password=password;Database=nhibernatedemo"))
             {
-                Console.WriteLine(e.ToString());
+                
+                try
+                {
+                    using (var cmd = new NpgsqlCommand())
+                    {
+                        con.Open();
+                        cmd.Connection = con;
+                        
+                        cmd.CommandText = $"INSERT INTO messsage (room, user, text) VALUES ('{userConnection.Room}', '{userConnection.User}' , '{message}')";
+
+                        cmd.ExecuteNonQuery();
+
+                        con.Close();
+                        Console.WriteLine($"PostgreSQL Command: {cmd.CommandText}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    error2 = e;
+                }
+                
             }
             
-
-            await Clients.All.SendAsync("ReceiveMessage", userConnection.User, message);
+            Console.WriteLine("Pause");
         }
 
         public override Task OnDisconnectedAsync(Exception exception)

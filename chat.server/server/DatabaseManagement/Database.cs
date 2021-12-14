@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using server.Models;
 using Npgsql;
 
-namespace server.DatabaseManagement
+//namespace server.DatabaseManagement
+namespace server
 {
     public class Database : IDisposable
     {
