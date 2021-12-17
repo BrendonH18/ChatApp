@@ -5,10 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="DatabaseManagement\Credential.hbm.xml" />
     <None Remove="DatabaseManagement\Message.hbm.xml" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="DatabaseManagement\Credential.hbm.xml" />
     <EmbeddedResource Include="DatabaseManagement\Message.hbm.xml" />
   </ItemGroup>
 

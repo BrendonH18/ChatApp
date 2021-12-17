@@ -28,7 +28,6 @@ namespace server.Hubs
         {
             //NHibernate
             myConfiguration = new Configuration();
-            //myConfiguration.AddAssembly(typeof(Message).Assembly); //NEW
             myConfiguration.Configure();
             mySessionFactory = myConfiguration.BuildSessionFactory();
             //mySession = mySessionFactory.OpenSession(); // unsafe
@@ -42,14 +41,29 @@ namespace server.Hubs
         //Database of past users stored in DB
         //Database of past messages stored in DB
 
+        public async Task ValidateUser(Credential credential)
+        {
+            string screenName = RetrieveScreenName(credential);
+
+            Tuple<bool, string> validationResult = screenName == "" ?
+                new Tuple<bool, string>(false, "") :
+                new Tuple<bool, string>(true, screenName);
+
+            // front end call
+        }
+
+
         public async Task JoinRoom(UserConnection userConnection)
         {
             _connections[Context.ConnectionId] = userConnection;
-
             await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Room);
+
+            List<Message> messages = RetrieveMessages(userConnection.Room);
+            messages.ForEach(async m =>
+                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", m.User, m.Text)
+            );
             
             await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"{userConnection.User} has entered {userConnection.Room}");
-
             await SendUsersInRoom(userConnection.Room);
         }
 
@@ -64,59 +78,8 @@ namespace server.Hubs
                 };
             }
 
-            await Clients.All.SendAsync("ReceiveMessage", userConnection.User, message);
-            
-            Exception error1;
-            
-            using (mySession = mySessionFactory.OpenSession())
-            {
-                Message loMessage = new Message
-                {
-                    Text = message,
-                    User = userConnection.User,
-                    Room = userConnection.Room
-                };
-
-                try
-                {
-                    mySession.Save(loMessage); //exception
-                    mySession.Flush(); // New
-                    mySession.GetCurrentTransaction().Commit(); // Is this necessary?
-                }
-                catch (Exception e)
-                {
-                    error1 = e;
-                }
-            }
-
-            Exception error2;
-
-            using (var con = new NpgsqlConnection("Server=127.0.0.1;Port=5432;Username=postgres;Password=password;Database=nhibernatedemo"))
-            {
-                
-                try
-                {
-                    using (var cmd = new NpgsqlCommand())
-                    {
-                        con.Open();
-                        cmd.Connection = con;
-                        
-                        cmd.CommandText = $"INSERT INTO messsage (room, user, text) VALUES ('{userConnection.Room}', '{userConnection.User}' , '{message}')";
-
-                        cmd.ExecuteNonQuery();
-
-                        con.Close();
-                        Console.WriteLine($"PostgreSQL Command: {cmd.CommandText}");
-                    }
-                }
-                catch (Exception e)
-                {
-                    error2 = e;
-                }
-                
-            }
-            
-            Console.WriteLine("Pause");
+            await Clients.All.SendAsync("ReceiveMessage", userConnection.User, message); // Chat
+            CreateMessage(userConnection, message); // Database
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
@@ -133,23 +96,108 @@ namespace server.Hubs
 
         public Task SendUsersInRoom(string room)
         {
-            var users= _connections.Values
+            var users = _connections.Values
                 .Where(connection => connection.Room == room)
-                .Select(connection => connection.User)
-
-
-            ;
-            //foreach (var item in RoomUsers)
-            //{
-            //    users.Add(item.Value.User);
-            //}
-
-                //.Select(connection => connection.User);
-
-            //var connectionIds = _connections.Values
-            //    .Where(connection => connection.
+                .Select(connection => connection.User);
 
             return Clients.Group(room).SendAsync("ReceiveUsers", users);
+        }
+
+        public void CreateMessage(UserConnection userConnection, string message)
+        {
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                Message localMessage = new Message
+                {
+                    Text = message,
+                    User = userConnection.User,
+                    Room = userConnection.Room
+                };
+
+                try
+                {
+                    mySession.Save(localMessage);
+                    mySession.Flush(); // New
+                    //mySession.GetCurrentTransaction().Commit(); // Is this necessary?
+                }
+                catch (Exception e)
+                {
+                    var ErrorOnCreateMessage = e;
+                }
+            }
+        }
+
+        public List<Message> RetrieveMessages(string room)
+        {
+            var roomMessages = new List<Message>();
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                try
+                {
+                    roomMessages = mySession.Query<Message>()
+                        .Where(m => m.Room == room)
+                        .ToList();
+
+                    mySession.Flush(); // New
+                }
+                catch (Exception e)
+                {
+                    var ErrorOnRetrieveMessage = e;
+                }
+
+                return roomMessages;
+            }
+        }
+
+        public List<string> RetrieveRooms(string user)
+        {
+            var userRooms = new List<string>();
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                try
+                {
+                    userRooms = mySession.Query<Message>()
+                        .Where(m => m.User == user)
+                        .Select(m => m.Room)
+                        .Distinct()
+                        .ToList();
+
+                    mySession.Flush(); // New
+                }
+                catch (Exception e)
+                {
+                    var ErrorOnRetrieveRooms = e;
+                }
+
+                return userRooms;
+            }
+        }
+
+        public string RetrieveScreenName(Credential credential) // Add "isRegistered" functionality to avoid protected screennames
+        {
+            //var isRegistered = false;
+            var screenName = "";
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                try
+                {
+                    screenName = mySession.Query<Credential>()
+                         .Where(c => c.Username == credential.Username && c.Password == credential.Password)
+                         .Select(c => c.ScreenName)
+                         .ToString();
+
+                    mySession.Flush(); // New
+                }
+                catch (Exception e)
+                {
+                    var ErrorOnRetrieveCredentials = e;
+                }
+
+                return screenName;
+            }
         }
     }
 }

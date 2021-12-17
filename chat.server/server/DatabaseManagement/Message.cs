@@ -7,7 +7,7 @@ namespace server
 {
     public class Message
     {
-        public virtual Guid Id { get; set; }
+        public virtual int Id { get; set; }
         public virtual string User { get; set; }
         public virtual string Text { get; set; }
         public virtual string Room { get; set; }
