@@ -1,28 +1,28 @@
 import { Form, Button } from 'react-bootstrap';
 import { useState } from 'react';
 
-const Lobby = ({ joinRoom }) => {
-const [user, setUser] = useState();
-const [room, setRoom] = useState();
-
-  return (
+const Login = ({userValidation}) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  
+  return(
     <div className="col-4 align-self-center">
     <Form className='lobby'
     onSubmit={ e => {
       e.preventDefault();
-      joinRoom(user, room);
+      userValidation(username, password);
     }}>
 
       <div className="d-grid gap-2">
       <Form.Group>
         
         <Form.Control 
-        placeholder="Your Name..." 
-        onChange={e => setUser(e.target.value)} />
+        placeholder="Username..." 
+        onChange={e => setUsername(e.target.value)} />
 
         <Form.Control
-        placeholder="Room Name..." 
-        onChange={e => setRoom(e.target.value)} />
+        placeholder="Password..." 
+        onChange={e => setPassword(e.target.value)} />
 
       </Form.Group>
       
@@ -30,12 +30,12 @@ const [room, setRoom] = useState();
       <Button
       variant='success' 
       type='submit' 
-      disabled={!user || !room}
-      >Join</Button>
+      disabled={!username || !password}
+      >Submit</Button>
       </div>
     </Form>
     </div>
   )
 }
 
-export default Lobby;
+export default Login

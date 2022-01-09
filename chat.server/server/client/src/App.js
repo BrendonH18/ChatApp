@@ -1,9 +1,10 @@
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Lobby from './Components/Lobby';
 import Chat from './Components/Chat';
+import Login from './Components/Login';
 
 function App() {
   const [connection, setConnection] = useState();
@@ -11,7 +12,43 @@ function App() {
   const [users, setUsers] = useState([]);
   const [roomName, setRoomName] = useState()
   const [activeRooms, setActiveRooms] = useState()
-  
+  const [isvalid, setIsvalid] = useState(false)
+  const [userName, setUserName] = useState()
+
+    useEffect(() => {
+        try {
+            const localConnection = new HubConnectionBuilder()
+                .withUrl('https://localhost:44314/chat')
+                .withAutomaticReconnect()
+                .configureLogging(LogLevel.Information)
+                .build()
+                
+        } catch (e) {
+            console.log(e)
+        }
+    })
+
+  const userValidation = async (username, password, is_guest = false) => {
+    try {
+      const localConnection = new HubConnectionBuilder()
+        .withUrl('https://localhost:44314/chat')
+        .withAutomaticReconnect()
+        .configureLogging(LogLevel.Information)
+        .build()
+
+        localConnection.on("IsValid", (IsValid, Username) => {
+            if (IsValid === false) return;
+            setUserName(Username);
+        })
+
+        await localConnection.start();
+        
+        await localConnection.invoke("ValidateCredentials", {username, password, is_guest})
+    } catch (error) {
+      console.log(error)
+    }    
+  }
+
   const joinRoom = async (user, room) => {
     try {
       const localConnection = new HubConnectionBuilder()
@@ -24,8 +61,8 @@ function App() {
         setActiveRooms( rooms ) // pending
       })
 
-      localConnection.on("ReceiveMessage", (user, text) => {
-        setMessages(messages => [...messages, {user, text}]);
+      localConnection.on("ReceiveMessage", (user, text, created_on) => {
+        setMessages(messages => [...messages, {user, text, created_on}]);
       })
 
       localConnection.on("ReceiveUsers", (users) => {
@@ -37,11 +74,12 @@ function App() {
         setMessages('');
         setUsers('');
         setRoomName('');
+        setUserName('');
       })
 
       await localConnection.start();
 
-      await localConnection.invoke("JoinRoom", {user, room})
+      await localConnection.invoke("JoinRoom")
       setRoomName(room);
       setConnection(localConnection);
     } catch (error) {
@@ -74,11 +112,16 @@ function App() {
           : ""}</h2>
       
       <hr className='line'/>
+      
+        <Login
+        userValidation={userValidation}
+        />
 
       {!connection 
         ?<Lobby 
           joinRoom={joinRoom}
-          activeRooms={activeRooms}/>
+          activeRooms={activeRooms}
+          userName={userName}/>
         :<Chat
           sendText={sendText}
           messages={messages}

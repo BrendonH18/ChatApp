@@ -9,6 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using server.Models;
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using System.Configuration;
+using server.Authentication;
 
 namespace server
 {
@@ -16,6 +24,15 @@ namespace server
     {
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+        
+        //added
+        public Startup (IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+        
+        public IConfiguration Configuration { get; }
+        
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSignalR();
@@ -29,8 +46,52 @@ namespace server
                         .AllowCredentials();
                 });
             });
-            // services.Add(new ServiceDescriptor(typeof(IDictionary<string, UserConnection>), new IDictionary<string, UserConnection>))
             services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
+
+            // new
+            services.AddControllers();
+            var key = "S3UtwpJ%^iMMl1qIcV@dNnEaO6f6F%ItC7XURDCQ!R0K";
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
+                };
+            });
+
+            services.AddSingleton<IJwtAuth>(new Auth(key));
+
+
+
+
+           // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+           //{
+           //    options.TokenValidationParameters = new TokenValidationParameters
+           //    {
+           //        ValidateIssuer = true,
+           //        ValidateAudience = true,
+           //        ValidateLifetime = true,
+           //        ValidateIssuerSigningKey = true,
+           //        ValidIssuer = Configuration["Jwt:Issuer"],
+           //        ValidAudience = Configuration["Jwt:Issuer"],
+           //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt: Key"]))
+           //    };
+           //});
+            //services.AddTransient<IUserRepository, UserRepository>(); // Issue with interfact
+            //services.AddTransient<ITokenService, TokenService>(); // issue with interface 
+
+            //services.AddSpaStaticFiles(config => {
+            //    config.RootPath = "client/build";    
+            //});
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,15 +101,30 @@ namespace server
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseHttpsRedirection(); // new JWT
+            
             app.UseRouting();
+
+            app.UseAuthentication(); // new jwt
+            app.UseAuthorization(); // new jwt
+
 
             app.UseCors();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapHub<UserValidationHub>("/validate");
+                endpoints.MapControllers(); // new jwt
             });
+
+            //app.UseSpa(spa => {
+            //    spa.Options.SourcePath = "client";
+            //    if (env.IsDevelopment()) 
+            //    {
+            //        spa.UseReactDevelopmentServer(npmScript: "start");
+            //    }
+            //});
         }
     }
 }

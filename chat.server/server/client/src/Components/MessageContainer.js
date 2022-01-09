@@ -9,7 +9,7 @@ const MessageContainer = ({ messages }) => {
         <div className='message row d-grid justify-content-end' key={index}>
 
           <div className="col-auto">
-          <div className='user'>{message.user}:</div>
+          <div className='user'>{message.user} - {message.created_on}:</div>
           
 
           <div className='text d-grid justify-content-end'>{message.text}</div>

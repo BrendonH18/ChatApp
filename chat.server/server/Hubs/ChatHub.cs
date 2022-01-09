@@ -36,60 +36,73 @@ namespace server.Hubs
             _botUser = "ChatBot";
             _connections = connections;
         }
-        
+
         //Online users stored in "_connections"
         //Database of past users stored in DB
         //Database of past messages stored in DB
 
-        public async Task ValidateUser(Credential credential)
+        public void ValidateCredentials(Credential credential)
         {
-            string screenName = RetrieveScreenName(credential);
+            bool exists = false;
 
-            Tuple<bool, string> validationResult = screenName == "" ?
-                new Tuple<bool, string>(false, "") :
-                new Tuple<bool, string>(true, screenName);
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                try
+                {
+                    exists = mySession.Query<Credential>()
+                        .Any(x => x.Username == credential.Username && x.Password == credential.Password);
+                    mySession.Flush();
 
-            // front end call
+                    if (exists)
+                        _connections[Context.ConnectionId] = new UserConnection 
+                        {
+                            Username = credential.Username
+                        };
+                    
+                }
+                catch (Exception e)
+                {
+                    var Error = e;
+                }
+            }
+
+            Clients.User(Context.UserIdentifier).SendAsync("IsValid", exists, credential.Username);
         }
 
 
-        public async Task JoinRoom(UserConnection userConnection)
+        //public async Task JoinRoom(UserConnection userConnection)
+        public async Task JoinRoom()
         {
-            _connections[Context.ConnectionId] = userConnection;
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Room);
+            //_connections[Context.ConnectionId] = userConnection;
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            userConnection.ActiveRoom = "Code";
+            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
 
-            List<Message> messages = RetrieveMessages(userConnection.Room);
+            List<Message> messages = RetrieveMessages(userConnection.ActiveRoom);
             messages.ForEach(async m =>
-                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", m.User, m.Text)
+                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", m.Username, m.Text, m.Created_on)
             );
             
-            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"{userConnection.User} has entered {userConnection.Room}");
-            await SendUsersInRoom(userConnection.Room);
+            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has entered {userConnection.ActiveRoom}");
+            await SendUsersInRoom(userConnection.ActiveRoom);
         }
 
         public async Task SendMessage(string message)
         {
-            if (!_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
-            {
-                userConnection = new UserConnection
-                {
-                    User = _botUser,
-                    Room = "Default"
-                };
-            }
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
-            await Clients.All.SendAsync("ReceiveMessage", userConnection.User, message); // Chat
-            CreateMessage(userConnection, message); // Database
+            await Clients.All.SendAsync("ReceiveMessage", userConnection.Username, message, DateTime.UtcNow); // To Chat
+            CreateMessage(userConnection, message, DateTime.UtcNow); // To Database
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
-                _connections.Remove(Context.ConnectionId);
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            _connections.Remove(Context.ConnectionId);
 
-            Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"{userConnection.User} has left the room");
+            Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has left the room");
 
-            SendUsersInRoom(userConnection.Room);
+            SendUsersInRoom(userConnection.ActiveRoom);
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -97,21 +110,22 @@ namespace server.Hubs
         public Task SendUsersInRoom(string room)
         {
             var users = _connections.Values
-                .Where(connection => connection.Room == room)
-                .Select(connection => connection.User);
+                .Where(connection => connection.ActiveRoom == room)
+                .Select(connection => connection.Username);
 
             return Clients.Group(room).SendAsync("ReceiveUsers", users);
         }
 
-        public void CreateMessage(UserConnection userConnection, string message)
+        public void CreateMessage(UserConnection userConnection, string message, DateTime dateTime)
         {
             using (mySession = mySessionFactory.OpenSession())
             {
                 Message localMessage = new Message
                 {
                     Text = message,
-                    User = userConnection.User,
-                    Room = userConnection.Room
+                    Username = userConnection.Username,
+                    Room = userConnection.ActiveRoom,
+                    Created_on = dateTime
                 };
 
                 try
@@ -159,7 +173,7 @@ namespace server.Hubs
                 try
                 {
                     userRooms = mySession.Query<Message>()
-                        .Where(m => m.User == user)
+                        .Where(m => m.Username == user)
                         .Select(m => m.Room)
                         .Distinct()
                         .ToList();
@@ -175,29 +189,29 @@ namespace server.Hubs
             }
         }
 
-        public string RetrieveScreenName(Credential credential) // Add "isRegistered" functionality to avoid protected screennames
-        {
-            //var isRegistered = false;
-            var screenName = "";
+        //public string RetrieveScreenName(UserConnection userConnection) // Add "isRegistered" functionality to avoid protected screennames
+        //{
+        //    //var isRegistered = false;
+        //    var screenName = "";
 
-            using (mySession = mySessionFactory.OpenSession())
-            {
-                try
-                {
-                    screenName = mySession.Query<Credential>()
-                         .Where(c => c.Username == credential.Username && c.Password == credential.Password)
-                         .Select(c => c.ScreenName)
-                         .ToString();
+        //    using (mySession = mySessionFactory.OpenSession())
+        //    {
+        //        try
+        //        {
+        //            screenName = mySession.Query<Credential>()
+        //                 .Where(c => c.Username == UserConnection.Username && c.Password == UserConnection.Password)
+        //                 .Select(c => c.ScreenName)
+        //                 .ToString();
 
-                    mySession.Flush(); // New
-                }
-                catch (Exception e)
-                {
-                    var ErrorOnRetrieveCredentials = e;
-                }
+        //            mySession.Flush(); // New
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            var ErrorOnRetrieveCredentials = e;
+        //        }
 
-                return screenName;
-            }
-        }
+        //        return screenName;
+        //    }
+        //}
     }
 }
