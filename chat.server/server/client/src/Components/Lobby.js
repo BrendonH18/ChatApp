@@ -9,7 +9,7 @@ const [room, setRoom] = useState();
     <Form className='lobby'
     onSubmit={ e => {
       e.preventDefault();
-      joinRoom(room);
+      joinRoom(userName, room);
     }}>
 
       <div className="d-grid gap-2">

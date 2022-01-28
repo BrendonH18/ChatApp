@@ -5,83 +5,70 @@ import { useEffect, useState } from 'react';
 import Lobby from './Components/Lobby';
 import Chat from './Components/Chat';
 import Login from './Components/Login';
+// import bcrypt from 'bcrypt';
 
 function App() {
-  const [connection, setConnection] = useState();
+  // const [connection, setConnection] = useState();
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
-  const [roomName, setRoomName] = useState()
-  const [activeRooms, setActiveRooms] = useState()
-  const [isvalid, setIsvalid] = useState(false)
+  const [activeRoom, setActiveRoom] = useState()
+  const [isvalid, setIsvalid] = useState(null)
   const [userName, setUserName] = useState()
+  const [loConnection, setLoConnection] = useState(null)
 
-    useEffect(() => {
-        try {
-            const localConnection = new HubConnectionBuilder()
-                .withUrl('https://localhost:44314/chat')
-                .withAutomaticReconnect()
-                .configureLogging(LogLevel.Information)
-                .build()
-                
-        } catch (e) {
-            console.log(e)
-        }
-    })
+  useEffect(() => {
+    const newConnection = new HubConnectionBuilder()
+    .withUrl('https://localhost:44314/chat')
+    .withAutomaticReconnect()
+    .configureLogging(LogLevel.Information)
+    .build();
+    setLoConnection(newConnection)
+  },[])
 
-  const userValidation = async (username, password, is_guest = false) => {
-    try {
-      const localConnection = new HubConnectionBuilder()
-        .withUrl('https://localhost:44314/chat')
-        .withAutomaticReconnect()
-        .configureLogging(LogLevel.Information)
-        .build()
-
-        localConnection.on("IsValid", (IsValid, Username) => {
-            if (IsValid === false) return;
-            setUserName(Username);
+  useEffect(() => {
+    if(loConnection){
+      loConnection.start()
+      .then(result => {
+        loConnection.on("ReturnedIsValid", (param) => {
+          console.log(param)  
+          setIsvalid(param.isValid);
+            if (param.IsValid === false) return;
+            setUserName(param.username);
         })
 
-        await localConnection.start();
-        
-        await localConnection.invoke("ValidateCredentials", {username, password, is_guest})
+        // loConnection.on("ReceiveActiveRooms", (rooms) => {
+        //   setActiveRooms( rooms ) // pending
+        // })
+  
+        loConnection.on("ReturnedMessage", (param) => setMessages(messages => [...messages, {param}])) 
+        loConnection.on("ReturnedUsers", (param) => setUsers( param ));
+  
+        loConnection.onclose(e =>{
+          // setConnection('');
+          setMessages('');
+          setUsers('');
+          // setRoomName('');
+          setUserName('');
+        })
+
+
+      })
+      .catch(e => console.log(e))
+    }
+  },[loConnection])
+
+  const userValidation = (param) => {
+    try {
+      loConnection.send("ReturnIsValid", param)
     } catch (error) {
       console.log(error)
     }    
   }
 
-  const joinRoom = async (user, room) => {
+  const activateChat = async (userName, activeRoom) => {
     try {
-      const localConnection = new HubConnectionBuilder()
-        .withUrl('https://localhost:44314/chat') //add url
-        .withAutomaticReconnect()
-        .configureLogging(LogLevel.Information)
-        .build()
-
-      localConnection.on("ReceiveActiveRooms", (rooms) => {
-        setActiveRooms( rooms ) // pending
-      })
-
-      localConnection.on("ReceiveMessage", (user, text, created_on) => {
-        setMessages(messages => [...messages, {user, text, created_on}]);
-      })
-
-      localConnection.on("ReceiveUsers", (users) => {
-        setUsers( users );
-      })
-
-      localConnection.onclose(e =>{
-        setConnection('');
-        setMessages('');
-        setUsers('');
-        setRoomName('');
-        setUserName('');
-      })
-
-      await localConnection.start();
-
-      await localConnection.invoke("JoinRoom")
-      setRoomName(room);
-      setConnection(localConnection);
+      await loConnection.invoke("JoinRoom", {userName, activeRoom} )
+      setActiveRoom(activeRoom);
     } catch (error) {
       console.log(error);
     }
@@ -89,38 +76,46 @@ function App() {
 
   const sendText = async (text) =>{
     try {
-      await connection.invoke('SendMessage', text);
+      await loConnection.send('SendMessage', text);
     } catch (error) {
       console.log(error);
     }
   }
 
-  const leaveRoom = async () => {
+  const leaveRoom = () => {
     try {
-      await connection.stop(); 
+      sendText(`${userName} has left the room`)
+      setActiveRoom()
+      setMessages([])
+      setUsers([]) 
     } catch (error) {
       console.log(error);
     }
+  }
+
+  const Validation = () => {
+    if(isvalid === null) return <div><h2>Please Login</h2><Login
+    userValidation={userValidation} /></div>
+    if(isvalid === false) return <div><h2>Credentials Don't Match</h2><Login userValidation={userValidation} /></div>
+    return <h2>Welcome {userName}</h2>
   }
 
   return (
     <div className='app container-fluid vh-100 d-flex flex-column '>
       {/* container-fluid h-100 */}
       <h2 className="d-flex justify-content-center">My Chat {
-        roomName
-          ? ` - ${roomName}`
+        activeRoom
+          ? ` - ${activeRoom}`
           : ""}</h2>
       
       <hr className='line'/>
-      
-        <Login
-        userValidation={userValidation}
-        />
 
-      {!connection 
+      <Validation/>
+
+      {!activeRoom 
         ?<Lobby 
-          joinRoom={joinRoom}
-          activeRooms={activeRooms}
+          joinRoom={activateChat}
+          // activeRooms={activeRooms}
           userName={userName}/>
         :<Chat
           sendText={sendText}

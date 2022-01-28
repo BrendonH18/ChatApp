@@ -8,6 +8,7 @@ using NHibernate.Cfg;
 using server.Models;
 using Npgsql; //new
 using server; //new
+using BCrypt.Net;
 
 //using server.DatabaseManagement;
 
@@ -41,98 +42,175 @@ namespace server.Hubs
         //Database of past users stored in DB
         //Database of past messages stored in DB
 
-        public void ValidateCredentials(Credential credential)
-        {
-            bool exists = false;
 
+        //CREDENTIALS
+        //RETRIEVE
+        private Credential RetrieveCredential(string username)
+        {
             using (mySession = mySessionFactory.OpenSession())
             {
-                try
-                {
-                    exists = mySession.Query<Credential>()
-                        .Any(x => x.Username == credential.Username && x.Password == credential.Password);
-                    mySession.Flush();
-
-                    if (exists)
-                        _connections[Context.ConnectionId] = new UserConnection 
-                        {
-                            Username = credential.Username
-                        };
-                    
-                }
-                catch (Exception e)
-                {
-                    var Error = e;
-                }
+                var loCredential = mySession.Query<Credential>()
+                    .SingleOrDefault(x => x.Username == username);
+                mySession.Flush();
+                return loCredential;
             }
+        }
 
-            Clients.User(Context.UserIdentifier).SendAsync("IsValid", exists, credential.Username);
+        //ADD
+        public async void AddCredential(Credential credential)
+        {
+            var loCredential = new Credential
+            {
+                Username = credential.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
+            };
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                await mySession.SaveAsync(loCredential);
+                mySession.Flush();
+            }
+        }
+
+        public void CheckCredential(Credential credential)
+        {
+            var param = new
+            {
+                IsValid = IsValid(credential),
+                Username = credential.Username
+            };
+            Clients.User(Context.UserIdentifier).SendAsync("ReturnedIsValid", param);
+        }
+
+        //VALIDATE
+        private bool IsValid(Credential credential)
+        {
+            var hashedPassword = RetrieveCredential(credential.Username).Password;
+            return BCrypt.Net.BCrypt.Verify(credential.Password, hashedPassword);
+            
+        }
+
+        //Validate - SEND
+        public void ReturnIsValid(Credential credential)
+        {
+            if (credential.LoginType == "Guest")
+                GuestLogin(credential);
+            if (credential.LoginType == "Create")
+            {
+                AddCredential(credential);
+                CheckCredential(credential);
+            }
+            if (credential.LoginType == "Returning")
+                CheckCredential(credential);
+        }
+
+        public void ReturnPastRooms(string Username)
+        {
+            var rooms = RetrieveRooms(Username);
+            var param = new
+            {
+
+            };
+            Clients.User(Context.UserIdentifier).SendAsync("ReturnedPastRooms", param);
         }
 
 
-        //public async Task JoinRoom(UserConnection userConnection)
-        public async Task JoinRoom()
+        //CHANGE
+
+
+        //GUEST
+        public void GuestLogin(Credential credential)
         {
-            //_connections[Context.ConnectionId] = userConnection;
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            userConnection.ActiveRoom = "Code";
+            var param = new
+            {
+                IsValid = true,
+                Username = AppendNumberToUsername(credential.Username)
+            };
+            Clients.User(Context.UserIdentifier).SendAsync("ReturnedIsValid", param );
+        }
+
+        private string AppendNumberToUsername(string username)
+        {
+            var number = new Random().Next(1000, 10000).ToString();
+            return username += number;
+        }
+
+
+
+
+        //public async Task JoinRoom(UserConnection userConnection)
+        public async Task JoinRoom(UserConnection userConnection)
+        {
+            _connections[Context.ConnectionId] = userConnection;
             await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
 
             List<Message> messages = RetrieveMessages(userConnection.ActiveRoom);
             messages.ForEach(async m =>
-                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", m.Username, m.Text, m.Created_on)
+                await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", new Message { Username = m.Username, Text = m.Text, Created_on = m.Created_on })
             );
-            
-            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has entered {userConnection.ActiveRoom}");
+
+            var param = new Message
+            {
+                Username = _botUser,
+                Text = $"{userConnection.Username} has entered {userConnection.ActiveRoom}",
+                Created_on = DateTime.Now,
+                Room = userConnection.ActiveRoom
+            };
+
+            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
+
             await SendUsersInRoom(userConnection.ActiveRoom);
+
         }
 
         public async Task SendMessage(string message)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
-            await Clients.All.SendAsync("ReceiveMessage", userConnection.Username, message, DateTime.UtcNow); // To Chat
-            CreateMessage(userConnection, message, DateTime.UtcNow); // To Database
+            var param = new Message
+            {
+                Username = userConnection.Username,
+                Text = message,
+                Created_on = DateTime.Now,
+                Room = userConnection.ActiveRoom
+            };
+
+            await Clients.All.SendAsync("ReturnedMessage", param); // To Chat
+            CreateMessage(param); // To Database
         }
+
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             _connections.Remove(Context.ConnectionId);
-
-            Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has left the room");
-
-            SendUsersInRoom(userConnection.ActiveRoom);
+            
+            if(userConnection != null)
+            {
+                Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
+                SendUsersInRoom(userConnection.ActiveRoom);
+            }
 
             return base.OnDisconnectedAsync(exception);
         }
 
         public Task SendUsersInRoom(string room)
         {
-            var users = _connections.Values
+            var param = _connections.Values
                 .Where(connection => connection.ActiveRoom == room)
-                .Select(connection => connection.Username);
-
-            return Clients.Group(room).SendAsync("ReceiveUsers", users);
+                .Select(connection => connection.Username)
+                .Distinct();
+            
+            return Clients.Group(room).SendAsync("ReturnedUsers", param);
         }
 
-        public void CreateMessage(UserConnection userConnection, string message, DateTime dateTime)
+        public void CreateMessage(Message param)
         {
             using (mySession = mySessionFactory.OpenSession())
             {
-                Message localMessage = new Message
-                {
-                    Text = message,
-                    Username = userConnection.Username,
-                    Room = userConnection.ActiveRoom,
-                    Created_on = dateTime
-                };
-
                 try
                 {
-                    mySession.Save(localMessage);
+                    mySession.Save(param);
                     mySession.Flush(); // New
-                    //mySession.GetCurrentTransaction().Commit(); // Is this necessary?
                 }
                 catch (Exception e)
                 {
@@ -188,30 +266,5 @@ namespace server.Hubs
                 return userRooms;
             }
         }
-
-        //public string RetrieveScreenName(UserConnection userConnection) // Add "isRegistered" functionality to avoid protected screennames
-        //{
-        //    //var isRegistered = false;
-        //    var screenName = "";
-
-        //    using (mySession = mySessionFactory.OpenSession())
-        //    {
-        //        try
-        //        {
-        //            screenName = mySession.Query<Credential>()
-        //                 .Where(c => c.Username == UserConnection.Username && c.Password == UserConnection.Password)
-        //                 .Select(c => c.ScreenName)
-        //                 .ToString();
-
-        //            mySession.Flush(); // New
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            var ErrorOnRetrieveCredentials = e;
-        //        }
-
-        //        return screenName;
-        //    }
-        //}
     }
 }

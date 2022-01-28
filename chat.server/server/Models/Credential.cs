@@ -14,5 +14,6 @@ namespace server.Models
         [Required]
         public virtual string Password { get; set; }
         public virtual string ScreenName { get; set; }
+        public virtual string LoginType { get; set; }
     }
 }
