@@ -3,7 +3,18 @@ import SendMessageForm from "./SendMessageForm"
 import UserContainer from "./UserContainer"
 import { Button } from 'react-bootstrap'
 
-const Chat = ({ sendText, messages, leaveRoom, users }) => {
+const Chat = ({ connection, setActiveRoom, setMessages, setUsers, messages, users }) => {
+  
+  const leaveRoom = async () => {
+    try {
+      await connection.invoke('LeaveRoom')
+      setActiveRoom(null)
+      setMessages([])
+      setUsers([]) 
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return(
     <div className='chat'>
@@ -26,8 +37,9 @@ const Chat = ({ sendText, messages, leaveRoom, users }) => {
       <MessageContainer 
       messages={messages}/>
 
-      <SendMessageForm 
-      sendText={sendText}/>
+      <SendMessageForm
+      connection={connection} 
+      />
       </div>
       </div>
     </div>

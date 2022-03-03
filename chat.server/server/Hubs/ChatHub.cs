@@ -6,10 +6,6 @@ using Microsoft.AspNetCore.SignalR;
 using NHibernate;
 using NHibernate.Cfg;
 using server.Models;
-using Npgsql; //new
-using server; //new
-
-//using server.DatabaseManagement;
 
 namespace server.Hubs
 {
@@ -23,6 +19,7 @@ namespace server.Hubs
         //Server
         private readonly IDictionary<string, UserConnection> _connections;
         private readonly string _botUser;
+        private readonly List<string> _rooms;
 
         public ChatHub(IDictionary<string, UserConnection> connections)
         {
@@ -35,104 +32,190 @@ namespace server.Hubs
             //Server
             _botUser = "ChatBot";
             _connections = connections;
+            _rooms = new List<string> { "Sports" , "Culture" , "Art" , "Fashion" , "Custom/New"};
         }
 
         //Online users stored in "_connections"
-        //Database of past users stored in DB
-        //Database of past messages stored in DB
+        //User Credentials stored in Database
+        //Past Messages stored in Database
 
-        public void ValidateCredentials(Credential credential)
+        public void ReturnIsValid(Credential credential)
         {
-            bool exists = false;
-
-            using (mySession = mySessionFactory.OpenSession())
+            if (credential.LoginType == "Guest")
+                GuestLogin(credential);
+            if (credential.LoginType == "Create")
             {
-                try
-                {
-                    exists = mySession.Query<Credential>()
-                        .Any(x => x.Username == credential.Username && x.Password == credential.Password);
-                    mySession.Flush();
-
-                    if (exists)
-                        _connections[Context.ConnectionId] = new UserConnection 
-                        {
-                            Username = credential.Username
-                        };
-                    
-                }
-                catch (Exception e)
-                {
-                    var Error = e;
-                }
+                if (RetrieveCredential(credential.Username) == null)
+                    AddCredential(credential);
+                CheckCredential(credential);
             }
-
-            Clients.User(Context.UserIdentifier).SendAsync("IsValid", exists, credential.Username);
+            if (credential.LoginType == "Returning")
+                CheckCredential(credential);
         }
 
-
-        //public async Task JoinRoom(UserConnection userConnection)
-        public async Task JoinRoom()
+        public void GuestLogin(Credential credential)
         {
-            //_connections[Context.ConnectionId] = userConnection;
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            userConnection.ActiveRoom = "Code";
+            var param = new
+            {
+                IsValid = true,
+                Username = AppendNumberToUsername(credential.Username),
+                LoginMessage = "Guest Login Successful"
+            };
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
+        }
+
+        private string AppendNumberToUsername(string username)
+        {
+            var number = new Random().Next(1000, 10000).ToString();
+            return username += number;
+        }
+
+        private Credential RetrieveCredential(string username)
+        {
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                var loCredential = mySession.Query<Credential>()
+                    .SingleOrDefault(x => x.Username == username);
+                mySession.Flush();
+                return loCredential;
+            }
+        }
+
+        public async void AddCredential(Credential credential)
+        {
+            var loCredential = new Credential
+            {
+                Username = credential.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
+            };
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                await mySession.SaveAsync(loCredential);
+                mySession.Flush();
+            }
+        }
+
+        public void CheckCredential(Credential credential)
+        {
+            var param = new
+            {
+                IsValid = IsValid(credential),
+                Username = credential.Username,
+                LoginMessage = IsValid(credential) ? "Login Successful" : "Login Unsuccessful"
+            };
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
+        }
+
+        //VALIDATE
+        private bool IsValid(Credential credential)
+        {
+            var loCredential = RetrieveCredential(credential.Username);
+            if (loCredential == null)
+                return false;
+            var hashedPassword = loCredential.Password;
+            return BCrypt.Net.BCrypt.Verify(credential.Password, hashedPassword);
+
+        }
+
+        public void ReturnAvailableRooms()
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableRooms", _rooms);
+        }
+
+        public async Task JoinRoom(UserConnection userConnection)
+        {
+            _connections[Context.ConnectionId] = userConnection;
             await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
 
-            List<Message> messages = RetrieveMessages(userConnection.ActiveRoom);
+            List<Message> messages = RetrieveMessagesFromDB(userConnection.ActiveRoom);
             messages.ForEach(async m =>
-                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", m.Username, m.Text, m.Created_on)
+                await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", new Message { Username = m.Username, Text = m.Text, Created_on = m.Created_on })
             );
-            
-            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has entered {userConnection.ActiveRoom}");
+
+            var param = new Message
+            {
+                Username = _botUser,
+                Text = $"{userConnection.Username} has entered {userConnection.ActiveRoom}",
+                Created_on = DateTime.Now,
+                Room = userConnection.ActiveRoom
+            };
+
+            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
+
             await SendUsersInRoom(userConnection.ActiveRoom);
+        }
+
+        public async Task LeaveRoom()
+        {
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+
+            var param = new Message
+            {
+                Username = _botUser,
+                Text = $"{userConnection.Username} has left {userConnection.ActiveRoom}",
+                Created_on = DateTime.Now,
+                Room = userConnection.ActiveRoom
+            };
+
+            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
+            userConnection.ActiveRoom = null;
+            await SendUsersInRoom(param.Room);
         }
 
         public async Task SendMessage(string message)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
-            await Clients.All.SendAsync("ReceiveMessage", userConnection.Username, message, DateTime.UtcNow); // To Chat
-            CreateMessage(userConnection, message, DateTime.UtcNow); // To Database
+            var param = new Message
+            {
+                Username = userConnection.Username,
+                Text = message,
+                Created_on = DateTime.UtcNow,
+                Room = userConnection.ActiveRoom
+            };
+
+            await Clients.All.SendAsync("ReturnedMessage", param); // To Chat
+            CreateMessageInDB(param); // To Database
         }
+
+        //public Task ReturnToLobby()
+        //{
+
+        //}
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             _connections.Remove(Context.ConnectionId);
-
-            Clients.Group(userConnection.ActiveRoom).SendAsync("ReceiveMessage", _botUser, $"{userConnection.Username} has left the room");
-
-            SendUsersInRoom(userConnection.ActiveRoom);
+            
+            if(userConnection != null && userConnection.ActiveRoom != null)
+            {
+                Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
+                SendUsersInRoom(userConnection.ActiveRoom);
+            }
 
             return base.OnDisconnectedAsync(exception);
         }
 
         public Task SendUsersInRoom(string room)
         {
-            var users = _connections.Values
+            var param = _connections.Values
                 .Where(connection => connection.ActiveRoom == room)
-                .Select(connection => connection.Username);
-
-            return Clients.Group(room).SendAsync("ReceiveUsers", users);
+                .Select(connection => connection.Username)
+                .Distinct();
+            
+            return Clients.Group(room).SendAsync("ReturnedUsers", param);
         }
 
-        public void CreateMessage(UserConnection userConnection, string message, DateTime dateTime)
+        public void CreateMessageInDB(Message param)
         {
             using (mySession = mySessionFactory.OpenSession())
             {
-                Message localMessage = new Message
-                {
-                    Text = message,
-                    Username = userConnection.Username,
-                    Room = userConnection.ActiveRoom,
-                    Created_on = dateTime
-                };
-
                 try
                 {
-                    mySession.Save(localMessage);
+                    mySession.Save(param);
                     mySession.Flush(); // New
-                    //mySession.GetCurrentTransaction().Commit(); // Is this necessary?
                 }
                 catch (Exception e)
                 {
@@ -141,7 +224,7 @@ namespace server.Hubs
             }
         }
 
-        public List<Message> RetrieveMessages(string room)
+        public List<Message> RetrieveMessagesFromDB(string room)
         {
             var roomMessages = new List<Message>();
 

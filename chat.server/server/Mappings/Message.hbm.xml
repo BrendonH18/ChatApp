@@ -3,11 +3,11 @@
 				   assembly="server"
 				   namespace="server.Models">
 	<class name="Message" table="message">
-		<id name ="Id" column="id">
+		<id name ="Id" column="message_id">
 			<generator class="native" />
 		</id>
 		<property name="Username" column="username"/>
-		<property name="Text" column="text"/>
+		<property name="Text" column="message"/>
 		<property name="Room" column="room"/>
 		<property name="Created_on" column="created_on"/>
 	</class>

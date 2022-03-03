@@ -1,15 +1,23 @@
 import { Form, Button } from "react-bootstrap";
 import { useState } from 'react';
 
-const SendMessageForm = ({ sendText }) => {
+const SendMessageForm = ({ connection }) => {
   const [text, setText] = useState('');
+
+  const sendMessage = (param) =>{
+    try {
+      connection.send('SendMessage', param);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return(
     
     <Form className='send-message-form' // fixed-bottom
     onSubmit={ e => {
       e.preventDefault();
-      sendText(text);
+      sendMessage(text);
       setText('');
     }}>
       <div className="row">

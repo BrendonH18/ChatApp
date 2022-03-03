@@ -1,34 +1,84 @@
-import { Form, Button } from 'react-bootstrap';
-import { useState } from 'react';
+import { Form, Button, Dropdown, DropdownButton } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import DropdownToggle from 'react-bootstrap/esm/DropdownToggle';
+import DropdownMenu from 'react-bootstrap/esm/DropdownMenu';
+import DropdownItem from 'react-bootstrap/esm/DropdownItem';
 
-const Lobby = ({ joinRoom, userName }) => {
-const [room, setRoom] = useState();
+const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableRooms, loginMessage }) => {
+const [room, setRoom] = useState(null);
+const [newRoom, setNewRoom] = useState("");
+const [isActive, setIsActive] = useState(false);
 
+useEffect(() => {
+  if (room === null)
+    return setIsActive(false)
+  if (room === "Custom/New" && newRoom === "")
+    return setIsActive(false)
+  setIsActive(true)
+}, [room, newRoom])
+
+const joinRoom = async (param) => {
+  try {
+    await connection.invoke("JoinRoom", param )
+    setActiveRoom(param.activeroom);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const logout = () => {
+  setIsValid(false)
+  setUserName('')
+  setLoginMessage('')
+}
+
+const handleSelect = (value) => (
+  setNewRoom(""),
+  setRoom(value)
+)
+
+const handleInput = (e) => setNewRoom(e.target.value)
+  
   return (
     <div className="col-4 align-self-center">
+    <h2>{loginMessage}</h2>
     <Form className='lobby'
     onSubmit={ e => {
       e.preventDefault();
-      joinRoom(room);
+      var param = {
+        username: userName,
+        activeroom: newRoom === "" ? room : newRoom
+      }
+      console.log(param)
+      joinRoom(param);
     }}>
 
       <div className="d-grid gap-2">
-      <Form.Group>
-        
-        <div>{ userName }</div>
-
-        <Form.Control
-        placeholder="Room Name..." 
-        onChange={e => setRoom(e.target.value)} />
-
-      </Form.Group>
-      
+      <DropdownButton title={room?room:"Select Room"} 
+      onSelect={handleSelect} 
+      >
+        {availableRooms===null ? <></> : availableRooms.map((room) => (
+          <Dropdown.Item eventKey={room}>{room}</Dropdown.Item>
+        ))}
+      </DropdownButton>
+      {room==="Custom/New"
+      ?<Form.Control
+          placeholder="Room Name..." 
+          onChange={handleInput}/>
+      :<></>}
       
       <Button
       variant='success' 
       type='submit' 
-      disabled={!room}
+      disabled={!isActive}
       >Join</Button>
+
+      <Button
+      variant='danger'
+      onClick={logout} 
+      type='button' 
+      // disabled={!isActive}
+      >Log Out</Button>
       </div>
     </Form>
     </div>

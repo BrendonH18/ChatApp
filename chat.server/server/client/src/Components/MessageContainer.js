@@ -1,6 +1,5 @@
 
 const MessageContainer = ({ messages }) => {
-
   return(
     // <div className="d-grid">
     <div className='message-container'>
@@ -9,10 +8,10 @@ const MessageContainer = ({ messages }) => {
         <div className='message row d-grid justify-content-end' key={index}>
 
           <div className="col-auto">
-          <div className='user'>{message.user} - {message.created_on}:</div>
+          <div className='user'>{message.param.username} - {message.param.created_on}:</div>
           
 
-          <div className='text d-grid justify-content-end'>{message.text}</div>
+          <div className='text d-grid justify-content-end'>{message.param.text}</div>
           </div>
 
         </div>
