@@ -39,6 +39,8 @@ namespace server.Hubs
         //User Credentials stored in Database
         //Past Messages stored in Database
 
+
+        //SIGNALR REQUESTS
         public void ReturnIsValid(Credential credential)
         {
             if (credential.LoginType == "Guest")
@@ -51,70 +53,6 @@ namespace server.Hubs
             }
             if (credential.LoginType == "Returning")
                 CheckCredential(credential);
-        }
-
-        public void GuestLogin(Credential credential)
-        {
-            var param = new
-            {
-                IsValid = true,
-                Username = AppendNumberToUsername(credential.Username),
-                LoginMessage = "Guest Login Successful"
-            };
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
-        }
-
-        private string AppendNumberToUsername(string username)
-        {
-            var number = new Random().Next(1000, 10000).ToString();
-            return username += number;
-        }
-
-        private Credential RetrieveCredential(string username)
-        {
-            using (mySession = mySessionFactory.OpenSession())
-            {
-                var loCredential = mySession.Query<Credential>()
-                    .SingleOrDefault(x => x.Username == username);
-                mySession.Flush();
-                return loCredential;
-            }
-        }
-
-        public async void AddCredential(Credential credential)
-        {
-            var loCredential = new Credential
-            {
-                Username = credential.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
-            };
-            using (mySession = mySessionFactory.OpenSession())
-            {
-                await mySession.SaveAsync(loCredential);
-                mySession.Flush();
-            }
-        }
-
-        public void CheckCredential(Credential credential)
-        {
-            var param = new
-            {
-                IsValid = IsValid(credential),
-                Username = credential.Username,
-                LoginMessage = IsValid(credential) ? "Login Successful" : "Login Unsuccessful"
-            };
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
-        }
-
-        //VALIDATE
-        private bool IsValid(Credential credential)
-        {
-            var loCredential = RetrieveCredential(credential.Username);
-            if (loCredential == null)
-                return false;
-            var hashedPassword = loCredential.Password;
-            return BCrypt.Net.BCrypt.Verify(credential.Password, hashedPassword);
-
         }
 
         public void ReturnAvailableRooms()
@@ -143,6 +81,7 @@ namespace server.Hubs
             await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
 
             await SendUsersInRoom(userConnection.ActiveRoom);
+
         }
 
         public async Task LeaveRoom()
@@ -160,7 +99,7 @@ namespace server.Hubs
             await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
             userConnection.ActiveRoom = null;
-            await SendUsersInRoom(param.Room);
+            SendUsersInRoom(param.Room);
         }
 
         public async Task SendMessage(string message)
@@ -175,37 +114,82 @@ namespace server.Hubs
                 Room = userConnection.ActiveRoom
             };
 
-            await Clients.All.SendAsync("ReturnedMessage", param); // To Chat
-            CreateMessageInDB(param); // To Database
+            await Clients.All.SendAsync("ReturnedMessage", param);
+            CreateMessageInDB(param);
         }
 
-        //public Task ReturnToLobby()
-        //{
-
-        //}
-
-        public override Task OnDisconnectedAsync(Exception exception)
+        //Server Code
+        public void GuestLogin(Credential credential)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            _connections.Remove(Context.ConnectionId);
-            
-            if(userConnection != null && userConnection.ActiveRoom != null)
+            var param = new
             {
-                Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
-                SendUsersInRoom(userConnection.ActiveRoom);
-            }
-
-            return base.OnDisconnectedAsync(exception);
+                IsValid = true,
+                Username = AppendNumberToUsername(credential.Username),
+                LoginMessage = "Guest Login Successful"
+            };
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
         }
 
-        public Task SendUsersInRoom(string room)
+        private string AppendNumberToUsername(string username)
+        {
+            var number = new Random().Next(1000, 10000).ToString();
+            return username += number;
+        }
+
+        private Credential RetrieveCredential(string username)
+        {
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                var loCredential = mySession.Query<Credential>()
+                    .SingleOrDefault(x => x.Username == username);
+                mySession.Flush();
+                return loCredential;
+            }
+        }
+
+        private async void AddCredential(Credential credential)
+        {
+            var loCredential = new Credential
+            {
+                Username = credential.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
+            };
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                await mySession.SaveAsync(loCredential);
+                mySession.Flush();
+            }
+        }
+
+        private void CheckCredential(Credential credential)
+        {
+            var param = new
+            {
+                IsValid = IsValid(credential),
+                Username = credential.Username,
+                LoginMessage = IsValid(credential) ? "Login Successful" : "Login Unsuccessful"
+            };
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
+        }
+
+        private bool IsValid(Credential credential)
+        {
+            var loCredential = RetrieveCredential(credential.Username);
+            if (loCredential == null)
+                return false;
+            var hashedPassword = loCredential.Password;
+            return BCrypt.Net.BCrypt.Verify(credential.Password, hashedPassword);
+
+        }
+
+        private void SendUsersInRoom(string room)
         {
             var param = _connections.Values
                 .Where(connection => connection.ActiveRoom == room)
                 .Select(connection => connection.Username)
                 .Distinct();
             
-            return Clients.Group(room).SendAsync("ReturnedUsers", param);
+            Clients.Group(room).SendAsync("ReturnedUsers", param);
         }
 
         public void CreateMessageInDB(Message param)
@@ -271,30 +255,5 @@ namespace server.Hubs
                 return userRooms;
             }
         }
-
-        //public string RetrieveScreenName(UserConnection userConnection) // Add "isRegistered" functionality to avoid protected screennames
-        //{
-        //    //var isRegistered = false;
-        //    var screenName = "";
-
-        //    using (mySession = mySessionFactory.OpenSession())
-        //    {
-        //        try
-        //        {
-        //            screenName = mySession.Query<Credential>()
-        //                 .Where(c => c.Username == UserConnection.Username && c.Password == UserConnection.Password)
-        //                 .Select(c => c.ScreenName)
-        //                 .ToString();
-
-        //            mySession.Flush(); // New
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            var ErrorOnRetrieveCredentials = e;
-        //        }
-
-        //        return screenName;
-        //    }
-        //}
     }
 }

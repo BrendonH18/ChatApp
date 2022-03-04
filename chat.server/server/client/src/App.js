@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Lobby from './Components/Lobby';
 import Chat from './Components/Chat';
 import Login from './Components/Login';
+// import bcrypt from 'bcrypt';
 
 function App() {
   const [messages, setMessages] = useState([]);

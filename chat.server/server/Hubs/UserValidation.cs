@@ -9,14 +9,14 @@ using server.Models;
 
 namespace server.Hubs
 {
-    public class UserValidationHub : Hub
+    public class UserValidation
     {
         //NHibernate
         private Configuration myConfiguration;
         private ISessionFactory mySessionFactory;
         private ISession mySession;
 
-        public UserValidationHub()
+        public UserValidation()
         {
             //NHibernate
             myConfiguration = new Configuration();
