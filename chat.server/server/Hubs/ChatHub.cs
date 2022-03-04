@@ -80,8 +80,7 @@ namespace server.Hubs
 
             await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
 
-            await SendUsersInRoom(userConnection.ActiveRoom);
-
+            SendUsersInRoom(userConnection.ActiveRoom);
         }
 
         public async Task LeaveRoom()
@@ -254,6 +253,20 @@ namespace server.Hubs
 
                 return userRooms;
             }
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            _connections.Remove(Context.ConnectionId);
+
+            if (userConnection != null && userConnection.ActiveRoom != null)
+            {
+                Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
+                SendUsersInRoom(userConnection.ActiveRoom);
+            }
+
+            return base.OnDisconnectedAsync(exception);
         }
     }
 }
