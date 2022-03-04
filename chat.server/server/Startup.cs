@@ -16,7 +16,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
-using server.Authentication;
 
 namespace server
 {
@@ -67,31 +66,6 @@ namespace server
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
                 };
             });
-
-            services.AddSingleton<IJwtAuth>(new Auth(key));
-
-
-
-
-           // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-           //{
-           //    options.TokenValidationParameters = new TokenValidationParameters
-           //    {
-           //        ValidateIssuer = true,
-           //        ValidateAudience = true,
-           //        ValidateLifetime = true,
-           //        ValidateIssuerSigningKey = true,
-           //        ValidIssuer = Configuration["Jwt:Issuer"],
-           //        ValidAudience = Configuration["Jwt:Issuer"],
-           //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt: Key"]))
-           //    };
-           //});
-            //services.AddTransient<IUserRepository, UserRepository>(); // Issue with interfact
-            //services.AddTransient<ITokenService, TokenService>(); // issue with interface 
-
-            //services.AddSpaStaticFiles(config => {
-            //    config.RootPath = "client/build";    
-            //});
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -101,20 +75,14 @@ namespace server
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseHttpsRedirection(); // new JWT
             
             app.UseRouting();
-
-            app.UseAuthentication(); // new jwt
-            app.UseAuthorization(); // new jwt
-
 
             app.UseCors();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
-                endpoints.MapHub<UserValidationHub>("/validate");
                 endpoints.MapControllers(); // new jwt
             });
 
