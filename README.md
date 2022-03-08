@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# ChatApp
-=======
 # ChatApp
 A full-stack application designed for instant communication between individuals in groups.
 
@@ -26,5 +23,3 @@ A full-stack application designed for instant communication between individuals 
 
 # Author
 Brendon Hall - Full Stack Software Developer (as of 8/1/2021) [LinkedIn](https://www.linkedin.com/in/brendonphall/)
-
->>>>>>> cd8827a3d661ca10ff6a3457ad2f04760ed1c6ac
