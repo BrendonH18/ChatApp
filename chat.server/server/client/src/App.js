@@ -85,7 +85,9 @@ function App() {
           ? ` - ${activeRoom}`
           : ""}</h2>
       <hr className='line'/>
-      <h2 className="d-flex justify-content-center">{loginMessage}</h2>
+          {activeRoom
+              ? <></>
+              : <h2 className="d-flex justify-content-center">{loginMessage}</h2>}
       {chatBody()}
     </div>
   );
