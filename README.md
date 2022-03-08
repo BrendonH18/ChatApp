@@ -5,7 +5,7 @@ A full-stack application designed for instant communication between individuals 
 
 [See the Live Render](https://chatapp-brendon.azurewebsites.net/)
 
-![image](![image](https://user-images.githubusercontent.com/80381428/157161700-30f93fda-8f7f-410e-9933-7575090671ca.png))
+![image](https://user-images.githubusercontent.com/80381428/157162918-cbb2e7ce-5375-499f-ae51-d90041d6a579.png)
 
 - This app uses:
   - SignalR to transfer data bi-directionally between a React front-end and a .NET Server.
