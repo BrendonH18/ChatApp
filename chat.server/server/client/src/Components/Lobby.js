@@ -1,8 +1,5 @@
 import { Form, Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
-import DropdownToggle from 'react-bootstrap/esm/DropdownToggle';
-import DropdownMenu from 'react-bootstrap/esm/DropdownMenu';
-import DropdownItem from 'react-bootstrap/esm/DropdownItem';
 
 const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableRooms, loginMessage }) => {
 const [room, setRoom] = useState(null);
@@ -49,7 +46,6 @@ const handleInput = (e) => setNewRoom(e.target.value)
         username: userName,
         activeroom: newRoom === "" ? room : newRoom
       }
-      console.log(param)
       joinRoom(param);
     }}>
 

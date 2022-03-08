@@ -1,12 +1,10 @@
 import { Form, Button } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
-import reactDom from 'react-dom';
 
 const Login = ({connection}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginType, setLoginType] = useState('Select')
-  const [isGuest, setIsGuest] = useState(false)
 
   useEffect(() => {
     formSelect();

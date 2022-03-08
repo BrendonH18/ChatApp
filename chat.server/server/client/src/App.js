@@ -47,10 +47,11 @@ function App() {
   },[connection])
 
   const handleReturnedIsValid = (param) => {
+    setLoginMessage(param.loginMessage)
     setIsValid(param.isValid);
     if (param.IsValid === false) return;
     setUserName(param.username);
-    setLoginMessage(param.loginmessage)
+    
   }
 
   useEffect(() => {
@@ -84,6 +85,7 @@ function App() {
           ? ` - ${activeRoom}`
           : ""}</h2>
       <hr className='line'/>
+      <h2 className="d-flex justify-content-center">{loginMessage}</h2>
       {chatBody()}
     </div>
   );
