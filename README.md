@@ -15,8 +15,7 @@ A full-stack application designed for instant communication between individuals 
 - Users may access the features by creating and validating their credentials or by using a Guest login feature.
 
 - Once inside the app, users may:
-  - Choose from a preset list of chat rooms.
-  - Create a custom chat room.
+  - Choose from a preset list of chat rooms or create a custom room.
   - See active chat room participants.
   - Receive notifications when participants enter/leave the room.
   - Exchange text with active participants.
