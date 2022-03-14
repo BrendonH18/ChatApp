@@ -35,5 +35,11 @@
       <HintPath>..\..\..\..\..\SharedLibs\NHibernate\Required_Bins\NHibernate.dll</HintPath>
     </Reference>
   </ItemGroup>
+	
+<ItemGroup>
+	<None Update ="client/build/**">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+</ItemGroup>
 
 </Project>

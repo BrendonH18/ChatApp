@@ -71,10 +71,10 @@ namespace server
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            //if (env.IsDevelopment())
+            //{
+            //    app.UseDeveloperExceptionPage();
+            //}
             
             app.UseRouting();
 
@@ -88,7 +88,7 @@ namespace server
 
             app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = "client";
+                spa.Options.SourcePath = "client/build";
                 if (env.IsDevelopment())
                 {
                     spa.UseReactDevelopmentServer(npmScript: "start");
