@@ -66,6 +66,10 @@ namespace server
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
                 };
             });
+            services.AddSpaStaticFiles(configuration =>
+            {
+                configuration.RootPath = "client/build";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,9 +77,9 @@ namespace server
         {
             //if (env.IsDevelopment())
             //{
-            //    app.UseDeveloperExceptionPage();
+            app.UseDeveloperExceptionPage();
             //}
-            
+
             app.UseRouting();
 
             app.UseCors();
@@ -88,7 +92,7 @@ namespace server
 
             app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = "client/build";
+                spa.Options.SourcePath = "client";
                 if (env.IsDevelopment())
                 {
                     spa.UseReactDevelopmentServer(npmScript: "start");
