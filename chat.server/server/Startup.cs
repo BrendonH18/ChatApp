@@ -84,6 +84,8 @@ namespace server
 
             app.UseCors();
 
+            app.UseSpaStaticFiles();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
