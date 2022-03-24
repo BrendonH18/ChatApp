@@ -15,12 +15,12 @@ useEffect(() => {
 }, [room, newRoom])
 
 const joinRoom = async (param) => {
-  try {
+  //try {
     await connection.invoke("JoinRoom", param )
     setActiveRoom(param.activeroom);
-  } catch (error) {
-    console.log(error);
-  }
+  //} catch (error) {
+  //  console.log(error);
+  //}
 }
 
 const logout = () => {

@@ -67,11 +67,11 @@ const Login = ({connection}) => {
   }
 
   const returnIsValid = (param) => {
-    try {
+    //try {
       connection.send("ReturnIsValid", param)
-    } catch (error) {
-      console.log(error)
-    }    
+    //} catch (error) {
+    //  console.log(error)
+    //}    
   }
 
   const handleSubmit = () => {

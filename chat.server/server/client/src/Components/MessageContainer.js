@@ -7,7 +7,7 @@ const MessageContainer = ({ messages }) => {
   useEffect(scrollToBottom, [messages])
 
   const formatDate = (param) => {
-    var pattern = "HH:mm M/d/yyy" 
+    //var pattern = "HH:mm M/d/yyy" 
     var date = new Date(param)
     return date.toLocaleString()
   }

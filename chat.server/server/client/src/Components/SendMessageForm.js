@@ -5,11 +5,11 @@ const SendMessageForm = ({ connection }) => {
   const [text, setText] = useState('');
 
   const sendMessage = (param) =>{
-    try {
+    //try {
       connection.send('SendMessage', param);
-    } catch (error) {
-      console.log(error);
-    }
+    //} catch (error) {
+    //  console.log(error);
+    //}
   }
 
   return(

@@ -18,9 +18,9 @@ function App() {
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('https://localhost:44314/chat')
+    .withUrl('/chat')
     .withAutomaticReconnect()
-    .configureLogging(LogLevel.Information)
+    //.configureLogging(LogLevel.Information)
     .build();
     setConnection(newConnection)
   },[])
@@ -42,7 +42,7 @@ function App() {
           setUserName('');
         })
       })
-      .catch(e => console.log(e))
+      //.catch(e => console.log(e))
     }
   },[connection])
 
