@@ -48,7 +48,7 @@ namespace server.Hubs
             if (credential.LoginType == "Create")
             {
                 if (RetrieveCredential(credential.Username) == null)
-                    AddCredential(credential);
+                    AddCredentialToDB(credential);
                 CheckCredential(credential);
             }
             if (credential.LoginType == "Returning")
@@ -146,7 +146,7 @@ namespace server.Hubs
             }
         }
 
-        private async void AddCredential(Credential credential)
+        public async void AddCredentialToDB(Credential credential)
         {
             var loCredential = new Credential
             {
