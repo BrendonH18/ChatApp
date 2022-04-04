@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using NHibernate;
 using NHibernate.Cfg;
+using NHibernate.Linq;
 using server.Models;
 
 namespace server.Hubs
@@ -117,7 +118,29 @@ namespace server.Hubs
             CreateMessageInDB(param);
         }
 
+        public void UpdatePassword(Credential param)
+        {
+            if(param == null) return;
+
+            var newPassword = BCrypt.Net.BCrypt.HashPassword(param.Password);
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                mySession.Query<Credential>()
+                    .Where(x => x.Username == param.Username)
+                    .Update(x => new Credential { Username = param.Username, Password = newPassword });
+            }
+        }
+
         //Server Code
+
+        public void ReplacePassword(string Username, string newPassword)
+        {
+            if ( Username == null || newPassword == null ) return;
+            
+            
+        }
+
         public void GuestLogin(Credential credential)
         {
             var param = new

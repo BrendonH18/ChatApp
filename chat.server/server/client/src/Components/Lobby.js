@@ -49,8 +49,11 @@ const handleUpdatePasswordInput = (e) => {
   
 const handleUpdatePasswordSubmit = async (e) => {
   e.preventDefault();
-  console.log("handleUpdatePasswordSubmit")
-  await connection.invoke("UpdatePassword", newPassword)
+  var param = {
+    username : userName,
+    password : newPassword
+  }
+  await connection.invoke("UpdatePassword", param)
 
 }
 
