@@ -5,6 +5,8 @@ const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActive
 const [room, setRoom] = useState(null);
 const [newRoom, setNewRoom] = useState("");
 const [isActive, setIsActive] = useState(false);
+const [isUpdatePasswordActive, setIsUpdatePasswordActive] = useState(false);
+const [newPassword, setNewPassword] = useState("");
 
 useEffect(() => {
   if (room === null)
@@ -34,8 +36,24 @@ const handleSelect = (value) => (
   setRoom(value)
 )
 
-const handleInput = (e) => setNewRoom(e.target.value)
+const handleCustomNew = (e) => setNewRoom(e.target.value)
+
+const handleIsUpdatePasswordToggle = (e) => {
+  e.preventDefault()
+  setIsUpdatePasswordActive(!isUpdatePasswordActive);
+}
+
+const handleUpdatePasswordInput = (e) => {
+  setNewPassword(e.target.value)
+  }
   
+const handleUpdatePasswordSubmit = async (e) => {
+  e.preventDefault();
+  console.log("handleUpdatePasswordSubmit")
+  await connection.invoke("UpdatePassword", newPassword)
+
+}
+
   return (
     <div className="col-4 align-self-center">
     <h2>{loginMessage}</h2>
@@ -60,7 +78,7 @@ const handleInput = (e) => setNewRoom(e.target.value)
       {room==="Custom/New"
       ?<Form.Control
           placeholder="Room Name..." 
-          onChange={handleInput}/>
+          onChange={handleCustomNew}/>
       :<></>}
       
       <Button
@@ -68,6 +86,24 @@ const handleInput = (e) => setNewRoom(e.target.value)
       type='submit' 
       disabled={!isActive}
       >Join</Button>
+
+      <Button
+      variant='info' 
+      onClick={handleIsUpdatePasswordToggle}
+      type='button' 
+      >Update Password</Button>
+
+      {isUpdatePasswordActive
+      ?<><Form.Control
+          placeholder="New Password" 
+          onChange={handleUpdatePasswordInput}/>
+          
+          <Button
+          variant='dark' 
+          onClick={handleUpdatePasswordSubmit}
+          type='button' 
+          >Submit New Password</Button></>
+      :<></>}
 
       <Button
       variant='danger'

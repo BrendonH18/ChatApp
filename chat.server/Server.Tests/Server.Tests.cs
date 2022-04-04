@@ -76,14 +76,14 @@ namespace Server.Tests
         }
 
         [Test]
-        public void CreateCredentialInDB_CredentialShould_BeInDB()
+        public void AddCredentialToDB_CredentialShould_BeInDB()
         {
             ////Arrange
             var testCredential = new Credential { Username = "Test_Username", Password = "Test_Password"};
             List<Credential> remoteCredentials;
 
             //Act
-            chatHub.CreateCredentialInDB(testCredential);
+            chatHub.AddCredentialToDB(testCredential);
 
             using (mySession = mySessionFactory.OpenSession())
             {
