@@ -107,5 +107,38 @@ namespace Server.Tests
             Assert.That(testCredential.Username, Is.EqualTo(remoteCredentials[0].Username));
             Assert.That(IsSamePassword, Is.True);
         }
+
+        [Test]
+        public void UpdatePassword_ShouldReturnTrue()
+        {
+            ////Arrange
+            Credential newCredential = new Credential { Username = "Tester", Password = "Test1" };
+            List<Credential> oldCredentials;
+            List<Credential> updatedCredentials;
+
+            //Act
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                oldCredentials = mySession.Query<Credential>()
+                    .Where(x =>
+                        x.Username == newCredential.Username)
+                    .ToList();
+                mySession.Flush();
+            }
+
+            chatHub.UpdatePasswordInDB(newCredential);
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                updatedCredentials = mySession.Query<Credential>()
+                    .Where(x =>
+                        x.Username == newCredential.Username)
+                    .ToList();
+                mySession.Flush();
+            }
+
+            //Assert
+
+        }
     }
 }

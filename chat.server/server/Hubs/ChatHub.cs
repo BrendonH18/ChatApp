@@ -120,25 +120,35 @@ namespace server.Hubs
 
         public void UpdatePassword(Credential param)
         {
-            if(param == null) return;
-
-            var newPassword = BCrypt.Net.BCrypt.HashPassword(param.Password);
-
-            using (mySession = mySessionFactory.OpenSession())
+            try
             {
-                mySession.Query<Credential>()
-                    .Where(x => x.Username == param.Username)
-                    .Update(x => new Credential { Username = param.Username, Password = newPassword });
+                UpdatePasswordInDB(param);
+                Clients.Caller.SendAsync("ReturnedPasswordUpdate", true);
             }
+            catch (Exception)
+            {
+                Clients.Caller.SendAsync("ReturnedPasswordUpdate", false);
+            }
+            
+            
         }
 
         //Server Code
 
-        public void ReplacePassword(string Username, string newPassword)
+        public void UpdatePasswordInDB(Credential param)
         {
-            if ( Username == null || newPassword == null ) return;
-            
-            
+            var newPassword = BCrypt.Net.BCrypt.HashPassword(param.Password);
+
+            using (mySession = mySessionFactory.OpenSession())
+            {
+                using (ITransaction transaction = mySession.BeginTransaction())
+                {
+                    mySession.Query<Credential>()
+                        .Where(x => x.Username == param.Username)
+                        .Update(x => new Credential { Username = param.Username, Password = newPassword });
+                    transaction.Commit();
+                }
+            }
         }
 
         public void GuestLogin(Credential credential)
@@ -147,6 +157,7 @@ namespace server.Hubs
             {
                 IsValid = true,
                 Username = AppendNumberToUsername(credential.Username),
+                LoginType = "Guest",
                 LoginMessage = "Guest Login Successful"
             };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
@@ -189,6 +200,7 @@ namespace server.Hubs
             {
                 IsValid = IsValid(credential),
                 Username = credential.Username,
+                LoginType = "User",
                 LoginMessage = IsValid(credential) ? "Login Successful" : "Login Unsuccessful"
             };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);

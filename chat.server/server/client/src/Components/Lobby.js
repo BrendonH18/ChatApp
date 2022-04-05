@@ -1,12 +1,13 @@
 import { Form, Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 
-const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableRooms, loginMessage }) => {
+const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableRooms, loginMessage, loginType}) => {
 const [room, setRoom] = useState(null);
 const [newRoom, setNewRoom] = useState("");
 const [isActive, setIsActive] = useState(false);
 const [isUpdatePasswordActive, setIsUpdatePasswordActive] = useState(false);
 const [newPassword, setNewPassword] = useState("");
+const [isPasswordUpdated, setIsPasswordUpdated] = useState(undefined);
 
 useEffect(() => {
   if (room === null)
@@ -20,6 +21,7 @@ const joinRoom = async (param) => {
   //try {
     await connection.invoke("JoinRoom", param )
     setActiveRoom(param.activeroom);
+    setIsPasswordUpdated(undefined);
   //} catch (error) {
   //  console.log(error);
   //}
@@ -31,10 +33,10 @@ const logout = () => {
   setLoginMessage('')
 }
 
-const handleSelect = (value) => (
-  setNewRoom(""),
+const handleSelect = (value) => {
+  setNewRoom("");
   setRoom(value)
-)
+}
 
 const handleCustomNew = (e) => setNewRoom(e.target.value)
 
@@ -54,7 +56,10 @@ const handleUpdatePasswordSubmit = async (e) => {
     password : newPassword
   }
   await connection.invoke("UpdatePassword", param)
-
+  connection.on("ReturnedPasswordUpdate", (param) => {
+    console.log("ReturnedPassword: ", param)
+    setIsPasswordUpdated(param)
+  })
 }
 
   return (
@@ -91,7 +96,8 @@ const handleUpdatePasswordSubmit = async (e) => {
       >Join</Button>
 
       <Button
-      variant='info' 
+      variant='info'
+      hidden={loginType === "Guest"} 
       onClick={handleIsUpdatePasswordToggle}
       type='button' 
       >Update Password</Button>
@@ -105,7 +111,17 @@ const handleUpdatePasswordSubmit = async (e) => {
           variant='dark' 
           onClick={handleUpdatePasswordSubmit}
           type='button' 
-          >Submit New Password</Button></>
+          >Submit New Password</Button>
+          
+          <h2
+          hidden={isPasswordUpdated === undefined}>
+          {isPasswordUpdated ? "Password Updated Successfully" : "Password Update Failed"}
+          </h2>
+
+          {/* {isPasswordUpdated != null && <h2>{isPasswordUpdated ? "Password Updated Successfully" : "Password Update Failed"}</h2>} */}
+          </>
+
+          
       :<></>}
 
       <Button

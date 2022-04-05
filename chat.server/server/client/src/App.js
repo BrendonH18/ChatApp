@@ -15,6 +15,8 @@ function App() {
   const [userName, setUserName] = useState('')
   const [connection, setConnection] = useState(null)
   const [loginMessage, setLoginMessage] = useState('')
+  const [loginType, setLoginType] = useState('');
+  // const [isPasswordUpdated, setIsPasswordUpdated] = useState(null);
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
@@ -33,7 +35,8 @@ function App() {
         connection.on("ReturnedMessage", (param) => setMessages(messages => [...messages, {param}])) 
         connection.on("ReturnedUsers", (param) => setUsers( param ))
         connection.on("ReturnedAvailableRooms", (param) => setAvailableRooms( param ))
-
+        // connection.on("ReturnedPasswordUpdate", (param) => setIsPasswordUpdated(param))
+        
         connection.send("ReturnAvailableRooms")
 
         connection.onclose(e =>{
@@ -50,8 +53,8 @@ function App() {
     setLoginMessage(param.loginMessage)
     setIsValid(param.isValid);
     if (param.IsValid === false) return;
+    setLoginType(param.loginType);
     setUserName(param.username);
-    
   }
 
   useEffect(() => {
@@ -68,7 +71,10 @@ function App() {
         setLoginMessage={setLoginMessage}
         setActiveRoom={setActiveRoom}
         availableRooms={availableRooms}
-        userName={userName}/>
+        // isPasswordUpdated={isPasswordUpdated}
+        userName={userName}
+        loginType={loginType}/>
+        
       :<Chat
         connection={connection}
         setActiveRoom={setActiveRoom}
