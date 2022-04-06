@@ -180,7 +180,7 @@ namespace server.Hubs
             }
         }
 
-        public async void CreateCredentialInDB(Credential credential)
+        public void CreateCredentialInDB(Credential credential)
         {
             var loCredential = new Credential
             {
@@ -189,7 +189,7 @@ namespace server.Hubs
             };
             using (mySession = mySessionFactory.OpenSession())
             {
-                await mySession.SaveAsync(loCredential);
+                mySession.Save(loCredential);
                 mySession.Flush();
             }
         }

@@ -15,7 +15,6 @@ namespace Server.Tests
     {
         // QUESTION: How do I handle a test when my database creates an ID, not my server?
         // Should I set up the database configuration once per test session or for each test?
-        Configuration myConfiguration;
         ISessionFactory mySessionFactory;
         ISession mySession;
         ChatHub chatHub;
@@ -79,7 +78,7 @@ namespace Server.Tests
         public void CreateCredentialInDB_CredentialShould_BeInDB()
         {
             ////Arrange
-            var testCredential = new Credential { Username = "Test_Username", Password = "Test_Password"};
+            var testCredential = new Credential { Username = "Test_Username", Password = "Test_Password" };
             List<Credential> remoteCredentials;
 
             //Act
@@ -112,16 +111,20 @@ namespace Server.Tests
         public void UpdatePassword_ShouldReturnTrue()
         {
             ////Arrange
-            Credential newCredential = new Credential { Username = "Tester", Password = "Test1" };
+            string oldPassword = "Test1";
+            Credential oldCredential = new Credential { Username = "Test_Username", Password = BCrypt.Net.BCrypt.HashPassword(oldPassword) };
+            Credential newCredential = new Credential { Username = oldCredential.Username, Password = "Test2" };
             List<Credential> oldCredentials;
-            List<Credential> updatedCredentials;
+            List<Credential> newCredentials;
 
             //Act
             using (mySession = mySessionFactory.OpenSession())
             {
+                mySession.Save(oldCredential);
+                
                 oldCredentials = mySession.Query<Credential>()
                     .Where(x =>
-                        x.Username == newCredential.Username)
+                        x.Username == oldCredential.Username)
                     .ToList();
                 mySession.Flush();
             }
@@ -130,15 +133,28 @@ namespace Server.Tests
 
             using (mySession = mySessionFactory.OpenSession())
             {
-                updatedCredentials = mySession.Query<Credential>()
+                newCredentials = mySession.Query<Credential>()
                     .Where(x =>
                         x.Username == newCredential.Username)
                     .ToList();
                 mySession.Flush();
+
+                mySession.Query<Credential>()
+                    .Where(x =>
+                        x.Username == newCredential.Username)
+                    .Delete();
+                mySession.Flush();
             }
 
-            //Assert
+            var IsOldCredentialPasswordValid = BCrypt.Net.BCrypt.Verify(oldPassword, oldCredentials[0].Password);
+            var IsNewCredentialPasswordValid = BCrypt.Net.BCrypt.Verify(newCredential.Password, newCredentials[0].Password);
 
+            //Assert
+            Assert.That(oldCredentials, Has.Exactly(1).Items);
+            Assert.That(newCredentials, Has.Exactly(1).Items);
+            Assert.That(IsOldCredentialPasswordValid, Is.True);
+            Assert.That(IsNewCredentialPasswordValid, Is.True);
+            Assert.That(oldCredentials[0].Username, Is.EqualTo(newCredentials[0].Username));
         }
     }
 }
