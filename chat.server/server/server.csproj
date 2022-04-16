@@ -6,7 +6,14 @@
 
   <ItemGroup>
     <None Remove="Mappings\Credential.hbm.xml" />
+    <None Remove="Mappings\hibernate.cfg.xml" />
     <None Remove="Mappings\Message.hbm.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Mappings\hibernate.cfg.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
+using System.IO;
 
 namespace server
 {
@@ -34,7 +35,7 @@ namespace server
         
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR();
+            services.AddSignalR(x => x.EnableDetailedErrors = true);
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder =>
@@ -48,24 +49,39 @@ namespace server
             services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
 
             // new
-            services.AddControllers();
-            var key = "S3UtwpJ%^iMMl1qIcV@dNnEaO6f6F%ItC7XURDCQ!R0K";
-            services.AddAuthentication(x =>
-            {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(x =>
-            {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
-                };
-            });
+            //services.AddControllers();
+            //var key = "S3UtwpJ%^iMMl1qIcV@dNnEaO6f6F%ItC7XURDCQ!R0K";
+            //services.AddAuthentication(x =>
+            //{
+            //    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //}).AddJwtBearer(x =>
+            //{
+            //    x.RequireHttpsMetadata = false;
+            //    x.SaveToken = true;
+            //    x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            //    {
+            //        ValidateIssuerSigningKey = true,
+            //        ValidateIssuer = false,
+            //        ValidateAudience = false,
+            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
+            //    };
+            //});
+
+            //NHibernate Automated
+            //var productionProps = new Dictionary<string, string>();
+            //productionProps.Add("connection.provider", "NHibernate.Connection.DriverConnectionProvider");
+            //productionProps.Add("dialect", "NHibernate.Dialect.PostgreSQL83Dialect");
+            //productionProps.Add("hibernate.connection.driver_class", "NHibernate.Driver.NpgsqlDriver");
+            //productionProps.Add("connection.connection_string", "Server=jelani.db.elephantsql.com;Port=5432;Username=utzedayv;Password=VUeNGDd0UKc_tek3BRXRtYDBCeP0Z7_S;Database=utzedayv");
+            //productionProps.Add("show_sql", "true");
+
+
+            //var cfg = new NHibernate.Cfg.Configuration()
+            //    .AddAssembly("server")
+            //    //.SetProperties(productionProps)
+            //    .Configure(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"hibernate.cfg.xml"));
+
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "client/build";
@@ -89,7 +105,7 @@ namespace server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
-                endpoints.MapControllers(); // new jwt
+                //endpoints.MapControllers(); // new jwt
             });
 
             app.UseSpa(spa =>
