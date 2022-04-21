@@ -95,10 +95,10 @@ const Login = ({connection}) => {
     }}>
       <div className="d-grid gap-2">
       <h2>Please Login:</h2>
-      <div class="btn-group" role="group" aria-label="Basic example">
-        <button type="button" class="btn btn-secondary" onClick={e => setLoginType('Returning') }>Returning User</button>
-        <button type="button" class="btn btn-secondary" onClick={e => setLoginType('Create') }>New User</button>
-        <button type="button" class="btn btn-secondary"onClick={e => setLoginType('Guest') }>Guest</button>
+      <div className="btn-group" role="group" aria-label="Basic example">
+        <button type="button" className="btn btn-secondary" onClick={e => setLoginType('Returning') }>Returning User</button>
+        <button type="button" className="btn btn-secondary" onClick={e => setLoginType('Create') }>New User</button>
+        <button type="button" className="btn btn-secondary"onClick={e => setLoginType('Guest') }>Guest</button>
       </div>
       {formSelect()}
       </div>

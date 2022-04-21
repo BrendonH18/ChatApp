@@ -13,22 +13,17 @@ namespace server.Hubs
     public class ChatHub : Hub
     {
         //NHibernate
-        private Configuration myConfiguration;
-        private ISessionFactory mySessionFactory;
-        private ISession mySession;
+        private ISessionFactory myFactory;
 
         //Server
         private readonly IDictionary<string, UserConnection> _connections;
         private readonly string _botUser;
         private readonly List<string> _rooms;
 
-        public ChatHub(IDictionary<string, UserConnection> connections)
+        public ChatHub(IDictionary<string, UserConnection> connections, ISessionFactory factory)
         {
             //NHibernate
-            myConfiguration = new Configuration();
-            myConfiguration.Configure();
-            mySessionFactory = myConfiguration.BuildSessionFactory();
-            //mySession = mySessionFactory.OpenSession(); // unsafe
+            myFactory = factory;
 
             //Server
             _botUser = "ChatBot";
@@ -139,11 +134,11 @@ namespace server.Hubs
         {
             var newPassword = BCrypt.Net.BCrypt.HashPassword(param.Password);
 
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
-                using (ITransaction transaction = mySession.BeginTransaction())
+                using (ITransaction transaction = session.BeginTransaction())
                 {
-                    mySession.Query<Credential>()
+                    session.Query<Credential>()
                         .Where(x => x.Username == param.Username)
                         .Update(x => new Credential { Username = param.Username, Password = newPassword });
                     transaction.Commit();
@@ -171,11 +166,11 @@ namespace server.Hubs
 
         private Credential RetrieveCredential(string username)
         {
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
-                var loCredential = mySession.Query<Credential>()
+                var loCredential = session.Query<Credential>()
                     .SingleOrDefault(x => x.Username == username);
-                mySession.Flush();
+                session.Flush();
                 return loCredential;
             }
         }
@@ -187,10 +182,10 @@ namespace server.Hubs
                 Username = credential.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
             };
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
-                mySession.Save(loCredential);
-                mySession.Flush();
+                session.Save(loCredential);
+                session.Flush();
             }
         }
 
@@ -228,12 +223,12 @@ namespace server.Hubs
 
         public void CreateMessageInDB(Message param)
         {
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
                 try
                 {
-                    mySession.Save(param);
-                    mySession.Flush(); // New
+                    session.Save(param);
+                    session.Flush(); // New
                 }
                 catch (Exception e)
                 {
@@ -246,15 +241,15 @@ namespace server.Hubs
         {
             var roomMessages = new List<Message>();
 
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
                 try
                 {
-                    roomMessages = mySession.Query<Message>()
+                    roomMessages = session.Query<Message>()
                         .Where(m => m.Room == room)
                         .ToList();
 
-                    mySession.Flush(); // New
+                    session.Flush(); // New
                 }
                 catch (Exception e)
                 {
@@ -269,17 +264,17 @@ namespace server.Hubs
         {
             var userRooms = new List<string>();
 
-            using (mySession = mySessionFactory.OpenSession())
+            using (var session = myFactory.OpenSession())
             {
                 try
                 {
-                    userRooms = mySession.Query<Message>()
+                    userRooms = session.Query<Message>()
                         .Where(m => m.Username == user)
                         .Select(m => m.Room)
                         .Distinct()
                         .ToList();
 
-                    mySession.Flush(); // New
+                    session.Flush(); // New
                 }
                 catch (Exception e)
                 {

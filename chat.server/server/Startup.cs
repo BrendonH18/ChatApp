@@ -16,7 +16,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
-using System.IO;
+using NHibernate;
+using NHibernate.NetCore;
+
 
 namespace server
 {
@@ -24,14 +26,11 @@ namespace server
     {
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+
+
         
-        //added
-        public Startup (IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-        
-        public IConfiguration Configuration { get; }
+        //Figure out how to add services.addhibernate(cfg); 
+
         
         public void ConfigureServices(IServiceCollection services)
         {
@@ -47,6 +46,11 @@ namespace server
                 });
             });
             services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
+
+
+            var cfg = new NHibernate.Cfg.Configuration().Configure();
+            var path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App.config");
+            services.AddHibernate(cfg);
 
             // new
             //services.AddControllers();
