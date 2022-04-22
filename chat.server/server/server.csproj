@@ -5,20 +5,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Mappings\1" />
     <None Remove="Mappings\Credential.hbm.xml" />
-    <None Remove="Mappings\hibernate.cfg.xml" />
     <None Remove="Mappings\Message.hbm.xml" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Mappings\hibernate.cfg.xml">
+    <EmbeddedResource Include="Mappings\1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Mappings\Credential.hbm.xml" />
-    <EmbeddedResource Include="Mappings\Message.hbm.xml" />
+    <EmbeddedResource Include="Mappings\Credential.hbm.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Mappings\Message.hbm.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

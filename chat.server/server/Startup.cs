@@ -47,44 +47,19 @@ namespace server
             });
             services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
 
-
-            var cfg = new NHibernate.Cfg.Configuration().Configure();
-            var path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App.config");
-            services.AddHibernate(cfg);
-
-            // new
-            //services.AddControllers();
-            //var key = "S3UtwpJ%^iMMl1qIcV@dNnEaO6f6F%ItC7XURDCQ!R0K";
-            //services.AddAuthentication(x =>
-            //{
-            //    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //}).AddJwtBearer(x =>
-            //{
-            //    x.RequireHttpsMetadata = false;
-            //    x.SaveToken = true;
-            //    x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            //    {
-            //        ValidateIssuerSigningKey = true,
-            //        ValidateIssuer = false,
-            //        ValidateAudience = false,
-            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key))
-            //    };
-            //});
-
             //NHibernate Automated
-            //var productionProps = new Dictionary<string, string>();
-            //productionProps.Add("connection.provider", "NHibernate.Connection.DriverConnectionProvider");
-            //productionProps.Add("dialect", "NHibernate.Dialect.PostgreSQL83Dialect");
-            //productionProps.Add("hibernate.connection.driver_class", "NHibernate.Driver.NpgsqlDriver");
-            //productionProps.Add("connection.connection_string", "Server=jelani.db.elephantsql.com;Port=5432;Username=utzedayv;Password=VUeNGDd0UKc_tek3BRXRtYDBCeP0Z7_S;Database=utzedayv");
-            //productionProps.Add("show_sql", "true");
+            var productionProps = new Dictionary<string, string>();
+            productionProps.Add("connection.provider", "NHibernate.Connection.DriverConnectionProvider");
+            productionProps.Add("dialect", "NHibernate.Dialect.PostgreSQL83Dialect");
+            productionProps.Add("hibernate.connection.driver_class", "NHibernate.Driver.NpgsqlDriver");
+            productionProps.Add("connection.connection_string", "Server=jelani.db.elephantsql.com;Port=5432;Username=utzedayv;Password=VUeNGDd0UKc_tek3BRXRtYDBCeP0Z7_S;Database=utzedayv");
+            productionProps.Add("show_sql", "true");
 
-
-            //var cfg = new NHibernate.Cfg.Configuration()
-            //    .AddAssembly("server")
-            //    //.SetProperties(productionProps)
-            //    .Configure(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"hibernate.cfg.xml"));
+            var cfg = new NHibernate.Cfg.Configuration()
+                .AddFile("Mappings/Credential.hbm.xml")
+                .AddFile("Mappings/Message.hbm.xml")
+                .SetProperties(productionProps);
+            services.AddHibernate(cfg);
 
             services.AddSpaStaticFiles(configuration =>
             {
