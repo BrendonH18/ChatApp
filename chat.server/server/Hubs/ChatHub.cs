@@ -37,7 +37,7 @@ namespace server.Hubs
 
 
         //SIGNALR REQUESTS
-        public void ReturnIsValid(Credential credential)
+        public void ReturnIsValid(User credential)
         {
             if (credential.LoginType == "Guest")
                 GuestLogin(credential);
@@ -113,7 +113,7 @@ namespace server.Hubs
             CreateMessageInDB(param);
         }
 
-        public void UpdatePassword(Credential param)
+        public void UpdatePassword(User param)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace server.Hubs
 
         //Server Code
 
-        public void UpdatePasswordInDB(Credential param)
+        public void UpdatePasswordInDB(User param)
         {
             var newPassword = BCrypt.Net.BCrypt.HashPassword(param.Password);
 
@@ -138,15 +138,15 @@ namespace server.Hubs
             {
                 using (ITransaction transaction = session.BeginTransaction())
                 {
-                    session.Query<Credential>()
+                    session.Query<User>()
                         .Where(x => x.Username == param.Username)
-                        .Update(x => new Credential { Username = param.Username, Password = newPassword });
+                        .Update(x => new User { Username = param.Username, Password = newPassword });
                     transaction.Commit();
                 }
             }
         }
 
-        public void GuestLogin(Credential credential)
+        public void GuestLogin(User credential)
         {
             var param = new
             {
@@ -164,20 +164,20 @@ namespace server.Hubs
             return username += number;
         }
 
-        private Credential RetrieveCredential(string username)
+        private User RetrieveCredential(string username)
         {
             using (var session = myFactory.OpenSession())
             {
-                var loCredential = session.Query<Credential>()
+                var loCredential = session.Query<User>()
                     .SingleOrDefault(x => x.Username == username);
                 session.Flush();
                 return loCredential;
             }
         }
 
-        public void CreateCredentialInDB(Credential credential)
+        public void CreateCredentialInDB(User credential)
         {
-            var loCredential = new Credential
+            var loCredential = new User
             {
                 Username = credential.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(credential.Password)
@@ -189,7 +189,7 @@ namespace server.Hubs
             }
         }
 
-        private void CheckCredential(Credential credential)
+        private void CheckCredential(User credential)
         {
             var param = new
             {
@@ -201,7 +201,7 @@ namespace server.Hubs
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedIsValid", param);
         }
 
-        private bool IsValid(Credential credential)
+        private bool IsValid(User credential)
         {
             var loCredential = RetrieveCredential(credential.Username);
             if (loCredential == null)

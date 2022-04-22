@@ -78,21 +78,21 @@ namespace Server.Tests
         public void CreateCredentialInDB_CredentialShould_BeInDB()
         {
             ////Arrange
-            var testCredential = new Credential { Username = "Test_Username", Password = "Test_Password" };
-            List<Credential> remoteCredentials;
+            var testCredential = new User { Username = "Test_Username", Password = "Test_Password" };
+            List<User> remoteCredentials;
 
             //Act
             chatHub.CreateCredentialInDB(testCredential);
 
             using (mySession = mySessionFactory.OpenSession())
             {
-                remoteCredentials = mySession.Query<Credential>()
+                remoteCredentials = mySession.Query<User>()
                     .Where(x =>
                         x.Username == "Test_Username")
                     .ToList();
                 mySession.Flush();
 
-                mySession.Query<Credential>()
+                mySession.Query<User>()
                     .Where(x =>
                         x.Username == "Test_Username")
                     .Delete();
@@ -112,17 +112,17 @@ namespace Server.Tests
         {
             ////Arrange
             string oldPassword = "Test1";
-            Credential oldCredential = new Credential { Username = "Test_Username", Password = BCrypt.Net.BCrypt.HashPassword(oldPassword) };
-            Credential newCredential = new Credential { Username = oldCredential.Username, Password = "Test2" };
-            List<Credential> oldCredentials;
-            List<Credential> newCredentials;
+            User oldCredential = new User { Username = "Test_Username", Password = BCrypt.Net.BCrypt.HashPassword(oldPassword) };
+            User newCredential = new User { Username = oldCredential.Username, Password = "Test2" };
+            List<User> oldCredentials;
+            List<User> newCredentials;
 
             //Act
             using (mySession = mySessionFactory.OpenSession())
             {
                 mySession.Save(oldCredential);
                 
-                oldCredentials = mySession.Query<Credential>()
+                oldCredentials = mySession.Query<User>()
                     .Where(x =>
                         x.Username == oldCredential.Username)
                     .ToList();
@@ -133,13 +133,13 @@ namespace Server.Tests
 
             using (mySession = mySessionFactory.OpenSession())
             {
-                newCredentials = mySession.Query<Credential>()
+                newCredentials = mySession.Query<User>()
                     .Where(x =>
                         x.Username == newCredential.Username)
                     .ToList();
                 mySession.Flush();
 
-                mySession.Query<Credential>()
+                mySession.Query<User>()
                     .Where(x =>
                         x.Username == newCredential.Username)
                     .Delete();
