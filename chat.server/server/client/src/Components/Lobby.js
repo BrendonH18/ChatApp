@@ -1,7 +1,7 @@
 import { Form, Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 
-const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableRooms, loginMessage, loginType}) => {
+const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableChannels, loginMessage, loginType}) => {
 const [room, setRoom] = useState(null);
 const [newRoom, setNewRoom] = useState("");
 const [isActive, setIsActive] = useState(false);
@@ -35,7 +35,7 @@ const logout = () => {
 
 const handleSelect = (value) => {
   setNewRoom("");
-  setRoom(value)
+  setRoom(availableChannels[value-1])
 }
 
 const handleCustomNew = (e) => setNewRoom(e.target.value)
@@ -72,15 +72,18 @@ const handleUpdatePasswordSubmit = async (e) => {
         username: userName,
         activeroom: newRoom === "" ? room : newRoom
       }
-      joinRoom(param);
+      console.log(param)
+      //joinRoom(param);
     }}>
 
       <div className="d-grid gap-2">
-      <DropdownButton title={room?room:"Select Room"} 
-      onSelect={handleSelect} 
+      <DropdownButton title={room ? room.name : "Select Room"} 
+      onSelect={
+        handleSelect
+      }
       >
-        {availableRooms===null ? <></> : availableRooms.map((room) => (
-          <Dropdown.Item eventKey={room}>{room}</Dropdown.Item>
+        {availableChannels===null ? <></> : availableChannels.map((room) => (
+          <Dropdown.Item eventKey={room.id}>{room.name}</Dropdown.Item>
         ))}
       </DropdownButton>
       {room==="Custom/New"

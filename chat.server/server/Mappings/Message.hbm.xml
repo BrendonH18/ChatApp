@@ -11,7 +11,7 @@
 		<property name="Text" column="message_text"/>
 		<!--<property name="Room" column="room"/>-->
 		<property name="Created_on" column="created_on"/>
-		<join table="user">
+		<join table="users">
 			<key column="user_id"/>
 			<property name="Username" column="username"/>
 		</join>

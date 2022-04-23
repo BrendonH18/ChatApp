@@ -51,15 +51,30 @@ namespace server.Hubs
                 CheckCredential(credential);
         }
 
-        public void ReturnAvailableRooms()
+        public void ReturnAvailableChannels()
         {
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableRooms", _rooms);
+            //List<Message> messages;
+            //using ( var session =myFactory.OpenSession())
+            //{
+            //    messages = session.Query<Message>().ToList();
+            //}
+
+            //Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", messages);
+
+
+            List<Channel> channels;
+            using (var session = myFactory.OpenSession())
+            {
+                channels = session.Query<Channel>()
+                        .ToList();
+            }
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
         }
 
         public async Task JoinRoom(UserConnection userConnection)
         {
             _connections[Context.ConnectionId] = userConnection;
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
+            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.ActiveRoom.Name);
 
             List<Message> messages = RetrieveMessagesFromDB(userConnection.ActiveRoom);
             messages.ForEach(async m =>
@@ -71,12 +86,13 @@ namespace server.Hubs
                 Username = _botUser,
                 Text = $"{userConnection.Username} has entered {userConnection.ActiveRoom}",
                 Created_on = DateTime.Now,
-                Room = userConnection.ActiveRoom
+                //issue
+                Room = userConnection.ActiveRoom.Name
             };
 
-            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
+            await Clients.Group(userConnection.ActiveRoom.Name).SendAsync("ReturnedMessage", param);
 
-            SendUsersInRoom(userConnection.ActiveRoom);
+            SendUsersInRoom(userConnection.ActiveRoom.Name);
         }
 
         public async Task LeaveRoom()
@@ -88,11 +104,11 @@ namespace server.Hubs
                 Username = _botUser,
                 Text = $"{userConnection.Username} has left {userConnection.ActiveRoom}",
                 Created_on = DateTime.Now,
-                Room = userConnection.ActiveRoom
+                Room = userConnection.ActiveRoom.Name
             };
 
-            await Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", param);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.ActiveRoom);
+            await Clients.Group(userConnection.ActiveRoom.Name).SendAsync("ReturnedMessage", param);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.ActiveRoom.Name);
             userConnection.ActiveRoom = null;
             SendUsersInRoom(param.Room);
         }
@@ -106,7 +122,7 @@ namespace server.Hubs
                 Username = userConnection.Username,
                 Text = message,
                 Created_on = DateTime.UtcNow,
-                Room = userConnection.ActiveRoom
+                Room = userConnection.ActiveRoom.Name
             };
 
             await Clients.All.SendAsync("ReturnedMessage", param);
@@ -214,7 +230,7 @@ namespace server.Hubs
         private void SendUsersInRoom(string room)
         {
             var param = _connections.Values
-                .Where(connection => connection.ActiveRoom == room)
+                .Where(connection => connection.ActiveRoom.Name == room)
                 .Select(connection => connection.Username)
                 .Distinct();
             
@@ -237,7 +253,7 @@ namespace server.Hubs
             }
         }
 
-        public List<Message> RetrieveMessagesFromDB(string room)
+        public List<Message> RetrieveMessagesFromDB(Channel channel)
         {
             var roomMessages = new List<Message>();
 
@@ -246,7 +262,8 @@ namespace server.Hubs
                 try
                 {
                     roomMessages = session.Query<Message>()
-                        .Where(m => m.Room == room)
+                        //issue
+                        .Where(m => m.Room == channel.Name)
                         .ToList();
 
                     session.Flush(); // New
@@ -292,8 +309,8 @@ namespace server.Hubs
 
             if (userConnection != null && userConnection.ActiveRoom != null)
             {
-                Clients.Group(userConnection.ActiveRoom).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
-                SendUsersInRoom(userConnection.ActiveRoom);
+                Clients.Group(userConnection.ActiveRoom.Name).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.Username} has left the room" });
+                SendUsersInRoom(userConnection.ActiveRoom.Name);
             }
 
             return base.OnDisconnectedAsync(exception);

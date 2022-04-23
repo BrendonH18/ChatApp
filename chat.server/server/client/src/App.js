@@ -10,7 +10,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [activeRoom, setActiveRoom] = useState(null)
-  const [availableRooms, setAvailableRooms] = useState(null);
+  const [availableChannels, setAvailableChannels] = useState(null);
   const [isValid, setIsValid] = useState(false)
   const [userName, setUserName] = useState('')
   const [connection, setConnection] = useState(null)
@@ -34,10 +34,11 @@ function App() {
         connection.on("ReturnedIsValid", (param) => handleReturnedIsValid(param))
         connection.on("ReturnedMessage", (param) => setMessages(messages => [...messages, {param}])) 
         connection.on("ReturnedUsers", (param) => setUsers( param ))
-        connection.on("ReturnedAvailableRooms", (param) => setAvailableRooms( param ))
+        connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
         // connection.on("ReturnedPasswordUpdate", (param) => setIsPasswordUpdated(param))
         
-        connection.send("ReturnAvailableRooms")
+        connection.send("ReturnAvailableChannels")
+        console.log("ReturnAvailableChannels")
 
         connection.onclose(e =>{
           setMessages('');
@@ -70,7 +71,7 @@ function App() {
         setUserName={setUserName}
         setLoginMessage={setLoginMessage}
         setActiveRoom={setActiveRoom}
-        availableRooms={availableRooms}
+        availableChannels={availableChannels}
         // isPasswordUpdated={isPasswordUpdated}
         userName={userName}
         loginType={loginType}/>

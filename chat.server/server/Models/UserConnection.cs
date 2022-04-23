@@ -9,6 +9,6 @@ namespace server.Models
     {
         public virtual int Id { get; set; }
         public virtual string Username { get; set; }
-        public virtual string ActiveRoom { get; set; }
+        public virtual Channel ActiveRoom { get; set; }
     }
 }

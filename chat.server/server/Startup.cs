@@ -56,8 +56,9 @@ namespace server
             productionProps.Add("show_sql", "true");
 
             var cfg = new NHibernate.Cfg.Configuration()
-                .AddFile("Mappings/Credential.hbm.xml")
+                .AddFile("Mappings/Channel.hbm.xml")
                 .AddFile("Mappings/Message.hbm.xml")
+                .AddFile("Mappings/User.hbm.xml")
                 .SetProperties(productionProps);
             services.AddHibernate(cfg);
 
