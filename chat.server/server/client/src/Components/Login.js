@@ -1,10 +1,28 @@
 import { Form, Button } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
 
-const Login = ({connection}) => {
+const Login = ({connection, setNEW_User}) => {
+  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginType, setLoginType] = useState('Select')
+
+
+  const returnLoginAttempt = (User) => {
+    connection.send("ReturnLoginAttempt", User)
+  }
+  const handleSubmit = () => {
+    const User = {
+      Username: username,
+      Password: password,
+      loginType: loginType
+    }
+    console.log(User)
+    returnLoginAttempt(User)
+    // returnIsValid(User)
+    setUsername('')
+    setPassword('');
+  }
 
   useEffect(() => {
     formSelect();
@@ -64,25 +82,6 @@ const Login = ({connection}) => {
       default:
         return <></>
     }
-  }
-
-  const returnIsValid = (param) => {
-    //try {
-      connection.send("ReturnIsValid", param)
-    //} catch (error) {
-    //  console.log(error)
-    //}    
-  }
-
-  const handleSubmit = () => {
-    const param = {
-      Username: username,
-      Password: password,
-      loginType: loginType
-    }
-    returnIsValid(param)
-    setUsername('')
-    setPassword('');
   }
 
   return(

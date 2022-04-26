@@ -1,137 +1,89 @@
 import { Form, Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 
-const Lobby = ({ connection, setIsValid, setUserName, setLoginMessage, setActiveRoom, userName, availableChannels, loginMessage, loginType}) => {
-const [room, setRoom] = useState(null);
-const [newRoom, setNewRoom] = useState("");
-const [isActive, setIsActive] = useState(false);
-const [isUpdatePasswordActive, setIsUpdatePasswordActive] = useState(false);
-const [newPassword, setNewPassword] = useState("");
-const [isPasswordUpdated, setIsPasswordUpdated] = useState(undefined);
+const Lobby = ({ connection, setChannel, availableChannels, userConnection }) => {
 
-useEffect(() => {
-  if (room === null)
-    return setIsActive(false)
-  if (room === "Custom/New" && newRoom === "")
-    return setIsActive(false)
-  setIsActive(true)
-}, [room, newRoom])
+  const [passwordToggle, setPasswordToggle] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordUpdateMessage, setPasswordUpdateMessage] = useState(null)
 
-const joinRoom = async (param) => {
-  //try {
-    await connection.invoke("JoinRoom", param )
-    setActiveRoom(param.activeroom);
-    setIsPasswordUpdated(undefined);
-  //} catch (error) {
-  //  console.log(error);
-  //}
-}
-
-const logout = () => {
-  setIsValid(false)
-  setUserName('')
-  setLoginMessage('')
-}
-
-const handleSelect = (value) => {
-  setNewRoom("");
-  setRoom(availableChannels[value-1])
-}
-
-const handleCustomNew = (e) => setNewRoom(e.target.value)
-
-const handleIsUpdatePasswordToggle = (e) => {
-  e.preventDefault()
-  setIsUpdatePasswordActive(!isUpdatePasswordActive);
-}
-
-const handleUpdatePasswordInput = (e) => {
-  setNewPassword(e.target.value)
+  const handleJoinChannel = () => {
+    connection.send("JoinChannel", userConnection);
   }
-  
-const handleUpdatePasswordSubmit = async (e) => {
-  e.preventDefault();
-  var param = {
-    username : userName,
-    password : newPassword
+  const handleLogOut = () => {
+    connection.send("LogOut")
   }
-  await connection.invoke("UpdatePassword", param)
-  connection.on("ReturnedPasswordUpdate", (param) => {
-    console.log("ReturnedPassword: ", param)
-    setIsPasswordUpdated(param)
-  })
-}
+  const handleSelect = (value) => {
+    setChannel(availableChannels[value-1])
+  }
+  const handleNewPasswordSubmit = async (e) => {
+    await connection.invoke("UpdatePassword", newPassword)
+    connection.on("ReturnedPasswordUpdate", (param) => {
+      console.log("ReturnedPassword: ", param)
+      setPasswordUpdateMessage(param)
+    })
+  }
 
   return (
     <div className="col-4 align-self-center">
-    <h2>{loginMessage}</h2>
+    {/* <h2>{loginMessage}</h2> */}
     <Form className='lobby'
     onSubmit={ e => {
       e.preventDefault();
-      var param = {
-        username: userName,
-        activeroom: newRoom === "" ? room : newRoom
-      }
-      console.log(param)
-      //joinRoom(param);
+      handleJoinChannel();
     }}>
 
       <div className="d-grid gap-2">
-      <DropdownButton title={room ? room.name : "Select Room"} 
-      onSelect={
-        handleSelect
-      }
+      <DropdownButton title={ 
+        userConnection.Channel.name ? userConnection.Channel.name : "Select Room"} 
+      onSelect={ handleSelect}
       >
         {availableChannels===null ? <></> : availableChannels.map((room) => (
           <Dropdown.Item eventKey={room.id}>{room.name}</Dropdown.Item>
         ))}
       </DropdownButton>
-      {room==="Custom/New"
+      {/* {room==="Custom/New"
       ?<Form.Control
           placeholder="Room Name..." 
           onChange={handleCustomNew}/>
-      :<></>}
+      :<></>} */}
       
       <Button
       variant='success' 
       type='submit' 
-      disabled={!isActive}
+      disabled={ userConnection.Channel.name ? false : true }
       >Join</Button>
 
       <Button
       variant='info'
-      hidden={loginType === "Guest"} 
-      onClick={handleIsUpdatePasswordToggle}
+      hidden={userConnection.User.loginType === "Guest" ? true : false} 
+      onClick={e => setPasswordToggle(!passwordToggle)}
       type='button' 
       >Update Password</Button>
 
-      {isUpdatePasswordActive
+      {passwordToggle
       ?<><Form.Control
           placeholder="New Password" 
-          onChange={handleUpdatePasswordInput}/>
+          onChange={e => setNewPassword(e.target.value)}/>
           
           <Button
           variant='dark' 
-          onClick={handleUpdatePasswordSubmit}
+          onClick={e => handleNewPasswordSubmit()}
           type='button' 
           >Submit New Password</Button>
           
           <h2
-          hidden={isPasswordUpdated === undefined}>
-          {isPasswordUpdated ? "Password Updated Successfully" : "Password Update Failed"}
+          hidden={passwordUpdateMessage === null}>
+          {passwordUpdateMessage}
           </h2>
 
-          {/* {isPasswordUpdated != null && <h2>{isPasswordUpdated ? "Password Updated Successfully" : "Password Update Failed"}</h2>} */}
           </>
-
-          
       :<></>}
 
       <Button
       variant='danger'
-      onClick={logout} 
+      onClick={e => handleLogOut()} 
       type='button' 
-      // disabled={!isActive}
       >Log Out</Button>
       </div>
     </Form>

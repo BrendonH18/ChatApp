@@ -14,5 +14,6 @@ namespace server.Models
         [Required]
         public virtual string Password { get; set; }
         public virtual string LoginType { get; set; }
+        public virtual bool IsPasswordValid { get; set; }
     }
 }

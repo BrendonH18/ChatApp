@@ -3,17 +3,10 @@ import SendMessageForm from "./SendMessageForm"
 import UserContainer from "./UserContainer"
 import { Button } from 'react-bootstrap'
 
-const Chat = ({ connection, setActiveRoom, setMessages, setUsers, messages, users }) => {
+const Chat = ({ connection, messages, connectedUsers }) => {
   
-  const leaveRoom = async () => {
-    //try {
-      await connection.invoke('LeaveRoom')
-      setActiveRoom(null)
-      setMessages([])
-      setUsers([]) 
-    //} catch (error) {
-    //  console.log(error);
-    //}
+  const handleLeaveRoom = () => {
+      connection.send('LeaveChannel')
   }
 
   return(
@@ -24,13 +17,13 @@ const Chat = ({ connection, setActiveRoom, setMessages, setUsers, messages, user
       variant="danger"
       onClick={ e => {
         e.preventDefault();
-        leaveRoom();
+        handleLeaveRoom();
       }}>Leave Chat</Button>
      </div>
      <div className='row'>
        <div className="col-3 d-grid">
       <UserContainer
-      users={users}/>
+      connectedUsers={connectedUsers}/>
       </div>
 
       <div className="col-9 d-grid">

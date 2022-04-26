@@ -4,13 +4,13 @@ const MessageContainer = ({ messages }) => {
   
   const messagesEndRef = useRef(null)
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({behavior: "smooth"})
-  useEffect(scrollToBottom, [messages])
-
   const formatDate = (param) => {
     //var pattern = "HH:mm M/d/yyy" 
     var date = new Date(param)
     return date.toLocaleString()
   }
+
+  useEffect(scrollToBottom, [messages])
   
   return(
     <div className='message-container' style={{overflowX: "hidden", overflowY: "scroll"}}>

@@ -7,16 +7,22 @@ import Chat from './Components/Chat';
 import Login from './Components/Login';
 
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [activeRoom, setActiveRoom] = useState(null)
-  const [availableChannels, setAvailableChannels] = useState(null);
-  const [isValid, setIsValid] = useState(false)
-  const [userName, setUserName] = useState('')
+  //NEW
   const [connection, setConnection] = useState(null)
-  const [loginMessage, setLoginMessage] = useState('')
-  const [loginType, setLoginType] = useState('');
-  // const [isPasswordUpdated, setIsPasswordUpdated] = useState(null);
+  const [messages, setMessages] = useState([])
+  const [user, setUser] = useState({})
+  const [channel, setChannel] = useState({})
+  const [userConnection, setUserConnection] = useState({})
+  const [availableChannels, setAvailableChannels] = useState([])
+  const [toggleDisplay, setToggleDisplay] = useState("Lobby")
+  const [connectedUsers, setConnectedUsers] = useState([])
+
+  useEffect(() => {
+    setUserConnection({
+      User: user,
+      Channel: channel
+    })
+  }, [user, channel])
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
@@ -31,70 +37,65 @@ function App() {
     if(connection){
       connection.start()
       .then(result => {
-        connection.on("ReturnedIsValid", (param) => handleReturnedIsValid(param))
-        connection.on("ReturnedMessage", (param) => setMessages(messages => [...messages, {param}])) 
-        connection.on("ReturnedUsers", (param) => setUsers( param ))
-        connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
-        // connection.on("ReturnedPasswordUpdate", (param) => setIsPasswordUpdated(param))
-        
-        connection.send("ReturnAvailableChannels")
-        console.log("ReturnAvailableChannels")
-
-        connection.onclose(e =>{
-          setMessages('');
-          setUsers('');
-          setUserName('');
+        connection.on("ReturnedMessage", (param) => { 
+          console.log(param)
+          if (param === "Reset")
+            return setMessages([])
+          setMessages(NEW_Messages => [...NEW_Messages, {param}]) 
         })
+        connection.on("ReturnedUser", (param) => {
+          console.log(param)
+          setUser(param)})
+        connection.on("ReturnedChannel", (param) => setChannel(param))
+        connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
+        connection.on("ReturnedToggleDisplay", (param) => setToggleDisplay( param ))
+        connection.on("ReturnedConnectedUsers", (param) => setConnectedUsers(param))
+
+        connection.send("ReturnAvailableChannels")
+        
       })
-      //.catch(e => console.log(e))
+      .catch(e => console.log(e))
     }
   },[connection])
 
-  const handleReturnedIsValid = (param) => {
-    setLoginMessage(param.loginMessage)
-    setIsValid(param.isValid);
-    if (param.IsValid === false) return;
-    setLoginType(param.loginType);
-    setUserName(param.username);
-  }
-
   useEffect(() => {
     chatBody()
-  },[isValid])
+  },[])
 
   const chatBody = () => {
-    if (!isValid) return <Login connection={connection}/>
-    return !activeRoom 
-      ?<Lobby
+    if (user.isPasswordValid != true) 
+      return <Login 
         connection={connection}
-        setIsValid={setIsValid}
-        setUserName={setUserName}
-        setLoginMessage={setLoginMessage}
-        setActiveRoom={setActiveRoom}
+        setNEW_User={setUser}
+        />
+    return toggleDisplay === "Lobby"
+      ?
+        <Lobby
+        connection={connection}
+        userConnection={userConnection}
+        setChannel={setChannel}
         availableChannels={availableChannels}
-        // isPasswordUpdated={isPasswordUpdated}
-        userName={userName}
-        loginType={loginType}/>
-        
-      :<Chat
+        />
+      :    
+        <Chat
         connection={connection}
-        setActiveRoom={setActiveRoom}
-        setMessages={setMessages}
-        setUsers={setUsers}
+        connectedUsers={connectedUsers}
         messages={messages}
-        users={users}/>
+        />
   }
 
   return (
     <div className='app container-fluid vh-100 d-flex flex-column '>
-      <h2 className="d-flex justify-content-center">My Chat {
-        activeRoom
-          ? ` - ${activeRoom}`
-          : ""}</h2>
+      <h2 className="d-flex justify-content-center">My Chat 
+      {/* {
+        activeChannel
+          ? ` - ${activeChannel.name}`
+          : ""} */}
+          </h2>
       <hr className='line'/>
-          {activeRoom
+          {/* {activeChannel
               ? <></>
-              : <h2 className="d-flex justify-content-center">{loginMessage}</h2>}
+              : <h2 className="d-flex justify-content-center">{loginMessage}</h2>} */}
       {chatBody()}
     </div>
   );

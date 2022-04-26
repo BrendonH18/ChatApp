@@ -17,7 +17,32 @@
 		</join>
 		<join table ="channel">
 			<key column="channel_id"/>
-			<property name="Room" column="channel_name"/>
+			<property name="Channel_name" column="channel_name"/>
 		</join>
+
+		<!--<set name="Random">
+			<key
+			
+		</set>-->
+		
+		<!--<subclass name="User" discriminator-value="M">
+			<join table="users">
+				<key column="user_id"/>
+				<property name="Id" column="user_id"/>
+				<property name="Username" column="username"/>
+			</join>
+		</subclass>-->
+		
+		<!--<joined-subclass
+			name="User"
+			table="users">
+			<key column="user_id"/>
+			<property name="Id" column="user_id"/>
+			<property name="Username" column="username"/>
+		</joined-subclass>-->
+		
+		
+		
+		
 	</class>
 </hibernate-mapping>

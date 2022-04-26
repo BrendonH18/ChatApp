@@ -39,7 +39,7 @@ namespace Server.Tests
                 Username = "Test_Username",
                 Text = "Test_Text",
                 Created_on = DateTime.UtcNow,
-                Room = "Test_Room"
+                Channel_name = "Test_Room"
             };
             List<Message> remoteMessages;
 
@@ -52,7 +52,7 @@ namespace Server.Tests
                     .Where(x =>
                         x.Username == testMessage.Username &&
                         x.Text == testMessage.Text &&
-                        x.Room == testMessage.Room)
+                        x.Channel_name == testMessage.Channel_name)
                     .ToList();
                 mySession.Flush();
 
@@ -60,7 +60,7 @@ namespace Server.Tests
                     .Where(x =>
                         x.Username == testMessage.Username &&
                         x.Text == testMessage.Text &&
-                        x.Room == testMessage.Room)
+                        x.Channel_name == testMessage.Channel_name)
                     .Delete();
                 mySession.Flush();
             }
@@ -69,7 +69,7 @@ namespace Server.Tests
             Assert.That(remoteMessages, Has.Exactly(1).Items);
             Assert.That(testMessage.Created_on, Is.EqualTo(remoteMessages[0].Created_on).Within(5).Seconds);
             Assert.That(remoteMessages[0].Id, Is.TypeOf<int>());
-            Assert.That(testMessage.Room, Is.EqualTo(remoteMessages[0].Room));
+            Assert.That(testMessage.Channel_name, Is.EqualTo(remoteMessages[0].Channel_name));
             Assert.That(testMessage.Username, Is.EqualTo(remoteMessages[0].Username));
             Assert.That(testMessage.Text, Is.EqualTo(remoteMessages[0].Text));
         }
@@ -82,7 +82,7 @@ namespace Server.Tests
             List<User> remoteCredentials;
 
             //Act
-            chatHub.CreateCredentialInDB(testCredential);
+            chatHub.CreateUserInDB(testCredential);
 
             using (mySession = mySessionFactory.OpenSession())
             {
@@ -129,7 +129,7 @@ namespace Server.Tests
                 mySession.Flush();
             }
 
-            chatHub.UpdatePasswordInDB(newCredential);
+            chatHub.NEW_UpdatePasswordInDB(newCredential);
 
             using (mySession = mySessionFactory.OpenSession())
             {
