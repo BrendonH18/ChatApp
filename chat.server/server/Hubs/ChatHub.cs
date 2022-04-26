@@ -115,7 +115,7 @@ namespace server.Hubs
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
             Message message = new Message();
-            message.Created_on = DateTime.Now;
+            message.Created_on = DateTime.UtcNow;
             message.User = userConnection.User;
             message.Username = userConnection.User.Username;
             message.Channel = userConnection.Channel;
@@ -264,21 +264,21 @@ namespace server.Hubs
             Clients.Group(channel).SendAsync("ReturnedConnectedUsers", names);
         }
 
+        //AN ERROR
         public void CreateMessageInDB(Message message)
         {
-            var NewMessage = message;
-            //using (var session = myFactory.OpenSession())
-            //{
-            //    try
-            //    {
-            //        session.Save(param);
-            //        session.Flush(); // New
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        var ErrorOnCreateMessage = e;
-            //    }
-            //}
+            using (var session = myFactory.OpenSession())
+            {
+                try
+                {
+                    session.Save(message);
+                    session.Flush(); // New
+                }
+                catch (Exception e)
+                {
+                    var ErrorOnCreateMessage = e;
+                }
+            }
         }
 
         public List<Message> RetrieveMessagesFromDB(Channel channel)
