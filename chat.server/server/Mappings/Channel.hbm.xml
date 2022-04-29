@@ -8,5 +8,10 @@
 			<generator class="identity" />
 		</id>
 		<property name="Name" column="channel_name"/>
+		
+		
+		
+		<!--I suppose I need to add something here to link Channel and Message-->
+		
 	</class>
 </hibernate-mapping>

@@ -38,18 +38,26 @@ function App() {
       connection.start()
       .then(result => {
         connection.on("ReturnedMessage", (param) => { 
-          console.log(param)
+          console.log("Returned Message:", param)
           if (param === "Reset")
             return setMessages([])
           setMessages(NEW_Messages => [...NEW_Messages, {param}]) 
         })
         connection.on("ReturnedUser", (param) => {
-          console.log(param)
+          console.log("Returned User:",param)
           setUser(param)})
-        connection.on("ReturnedChannel", (param) => setChannel(param))
-        connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
-        connection.on("ReturnedToggleDisplay", (param) => setToggleDisplay( param ))
-        connection.on("ReturnedConnectedUsers", (param) => setConnectedUsers(param))
+        connection.on("ReturnedChannel", (param) => {
+          console.log("Returned Channel:", param)
+          setChannel(param)})
+        connection.on("ReturnedAvailableChannels", (param) => {
+          console.log("Returned Available Channels:",param)
+          setAvailableChannels( param )})
+        connection.on("ReturnedToggleDisplay", (param) => {
+          console.log("Returned Toggle:",param)
+          setToggleDisplay( param )})
+        connection.on("ReturnedConnectedUsers", (param) => {
+          console.log("Returned Connected Users:", param)
+          setConnectedUsers(param)})
 
         connection.send("ReturnAvailableChannels")
         

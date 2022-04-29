@@ -117,12 +117,14 @@ namespace server.Hubs
             Message message = new Message();
             message.Created_on = DateTime.UtcNow;
             message.User = userConnection.User;
-            message.Username = userConnection.User.Username;
+            //message.Username = userConnection.User.Username;
             message.Channel = userConnection.Channel;
-            message.Channel_name = userConnection.Channel.Name;
+            //message.Channel_name = userConnection.Channel.Name;
             message.Text = text;
 
-            if (!isBot)
+
+            //Could cast the "Username" and "Channel_name" as strings even though their numbers. Will the database bounce it?
+            if (!isBot) 
                 CreateMessageInDB(message);
 
             return Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", message);
@@ -291,10 +293,10 @@ namespace server.Hubs
                 {
                     roomMessages = session.Query<Message>()
                         //issue
-                        .Where(m => m.Channel_name == channel.Name)
+                        .Where(m => m.Channel.Name == channel.Name)
                         .ToList();
 
-                    session.Flush(); // New
+                    //session.Flush(); // New
                 }
                 catch (Exception e)
                 {
@@ -313,7 +315,7 @@ namespace server.Hubs
 
             if (userConnection != null && userConnection.Channel != null)
             {
-                Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", new Message { Username = _botUser, Text = $"{userConnection.User} has left the room" });
+                Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", new Message { User = new User { Username = _botUser}, Text = $"{userConnection.User} has left the room" });
                 SendUsersInChannel(userConnection.Channel.Name);
             }
 
