@@ -1,12 +1,13 @@
 import { Form, Button } from "react-bootstrap";
 import { useState } from 'react';
 
-const SendMessageForm = ({ connection }) => {
+const SendMessageForm = ({ userConnection }) => {
   
   const [text, setText] = useState('');
 
   const sendMessage = (param) =>{
-      connection.send("SendMessage", param);
+    console.log("MESSAGE:", param)
+      // connection.send("SendMessage", param);
   }
 
   return(
@@ -32,7 +33,8 @@ const SendMessageForm = ({ connection }) => {
       <div className="col-3 d-grid">
       <Button 
       variant='success' 
-      type='submit' 
+      type='submit'
+      disabled={!userConnection.user.isPasswordValid} 
       >Send</Button>
       </div>
       </div>
