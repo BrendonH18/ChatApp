@@ -7,9 +7,7 @@
 		<id name ="Id" column="message_id">
 			<generator class="identity" />
 		</id>
-		<!--<property name="Username" column="username"/>-->
 		<property name="Text" column="message_text"/>
-		<!--<property name="Room" column="room"/>-->
 		<property name="Created_on" column="created_on"/>
 
 		<many-to-one
@@ -23,47 +21,5 @@
 			class="Channel"
 			column="channel_id"
 			lazy="false"/>
-
-		<!--While attempting to collect available table names:
-		
-		[2022-04-29T00:52:08.835Z] Error: Connection disconnected with error 'Error: Server returned an error on close: Connection closed with an error. PropertyNotFoundException: Could not find a getter for property 'channel_name' in class 'server.Models.Message''.-->
-
-		<!--Try 1 to 1 reference instead of join-->
-		
-		<!--<join table="users">
-			<key column="user_id"/>
-			<property name="Username" column="username"/>
-		</join>
-		<join table ="channel">
-			<key column="channel_id"/>
-			<property name="Channel_name" column="channel_name"/>
-		</join>-->
-		
-		
-
-		<!--<set name="Random">
-			<key
-			
-		</set>-->
-		
-		<!--<subclass name="User" discriminator-value="M">
-			<join table="users">
-				<key column="user_id"/>
-				<property name="Id" column="user_id"/>
-				<property name="Username" column="username"/>
-			</join>
-		</subclass>-->
-		
-		<!--<joined-subclass
-			name="User"
-			table="users">
-			<key column="user_id"/>
-			<property name="Id" column="user_id"/>
-			<property name="Username" column="username"/>
-		</joined-subclass>-->
-		
-		
-		
-		
 	</class>
 </hibernate-mapping>

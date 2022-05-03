@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 import Landing from './Components/LoginComponents/LoginDashboard';
 import ChannelDashboard from './Components/ChannelSelectionComponents/ChannelDashboard';
 import ActiveChannel from './Components/ChannelSelectionComponents/ActiveChannel';
+import User_CheckReturning from './Components/LoginComponents/User_CheckReturning'
+import User_CreateGuest from './Components/LoginComponents/User_CreateGuest';
+import User_CreateNew from './Components/LoginComponents/User_CreateNew';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, Outlet} from 'react-router-dom'
 
 function App() {
@@ -31,7 +34,7 @@ function App() {
     isPasswordValid: true
   }
   const message1 = {
-    username: "Brendon",
+    user: {username: "Brendon"},
     text: "Hello World",
     created_on: Date()
   }
@@ -85,28 +88,41 @@ function App() {
     if(connection){
       connection.start()
       .then(result => {
+        
+        //Returned
         connection.on("ReturnedMessage", (param) => { 
           console.log("Returned Message:", param)
           if (param === "Reset")
             return setMessages([])
-          setMessages(NEW_Messages => [...NEW_Messages, {param}]) 
+          setMessages(x => [...x, param]) 
         })
+
         connection.on("ReturnedUser", (param) => {
           console.log("Returned User:",param)
-          setUserConnection(x => {x.user = param})})
+          const newUserConnection = userConnection
+          newUserConnection.user = param
+          setUserConnection(newUserConnection)
+        })
+
         connection.on("ReturnedChannel", (param) => {
           console.log("Returned Channel:", param)
-          setUserConnection(x => {x.channel = param})})
+          const newUserConnection = userConnection
+          newUserConnection.channel = param
+          setUserConnection(newUserConnection)})
+
         connection.on("ReturnedAvailableChannels", (param) => {
           console.log("Returned Available Channels:",param)
           setAvailableChannels( param )})
+
         // connection.on("ReturnedToggleDisplay", (param) => {
         //   console.log("Returned Toggle:",param)
         //   setToggleDisplay( param )})
+
         connection.on("ReturnedConnectedUsers", (param) => {
           console.log("Returned Connected Users:", param)
           setConnectedUsers(param)})
-
+        
+        //Send
         connection.send("ReturnAvailableChannels")
         
       })
@@ -162,6 +178,7 @@ function App() {
 
   return (
     <>
+    <div className='app container-fluid vh-100 d-flex flex-column '>
       <Router>
         <nav>
           <Link to="/">Home</Link>
@@ -170,16 +187,17 @@ function App() {
         </nav>
         <Routes>
           <Route path="/" element={<h2>Welcome Page</h2>}/>
-          <Route path="/Channel/" element={<ChannelDashboard availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
+          <Route path="/Channel/" element={<ChannelDashboard setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path=":ActiveChannel" element={<ActiveChannel messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
           </Route>
           <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
-            <Route path="Returning" element={<h2>Returning</h2>}/>
-            <Route path="Create" element={<h2>Create</h2>}/>
-            <Route path="Guest" element={<h2>Guest</h2>}/>
+            <Route path="Returning" element={<User_CheckReturning connection={connection}/>}/>
+            <Route path="Create" element={<User_CreateNew connection={connection}/>}/>
+            <Route path="Guest" element={<User_CreateGuest connection={connection}/>}/>
           </Route>
         </Routes>
       </Router>
+    </div>
     </>
 
 

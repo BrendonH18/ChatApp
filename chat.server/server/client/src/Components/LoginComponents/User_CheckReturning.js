@@ -1,14 +1,45 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { Form, Button } from 'react-bootstrap';
 
-const User_CheckReturning = ({ connectedUsers }) => {
-  
-    let { LoginType } = useParams();
+const User_CheckReturning = ({ connection }) => {
+
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const [loginType, setLoginType] = useState("Returning")
+
+    const sendLoginAttempt = () => {
+      const user = {
+        Username: username,
+        Password: password,
+        LoginType: loginType
+      }
+      console.log("ReturnLoginAttempt:", user)
+      connection.send("ReturnLoginAttempt", user)
+    }
+
 
     return(
       <>
-      <h2>Check Returning - {LoginType}</h2>
+      <h2>Returning</h2>
+       <Form.Group>
+            <Form.Control
+              placeholder="Username..."
+              onChange={e => setUsername(e.target.value)} />
+            <Form.Control
+              placeholder="Password..."
+              onChange={e => setPassword(e.target.value)}
+              />
+          </Form.Group>
+
+          <Button
+            variant='success'
+            type='submit'
+            onClick={sendLoginAttempt}
+            disabled={!username || !password}
+          >User Login</Button>
       </>
     )
   }
-  
+
   export default User_CheckReturning;

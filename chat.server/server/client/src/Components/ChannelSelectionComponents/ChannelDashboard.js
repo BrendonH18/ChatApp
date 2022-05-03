@@ -1,15 +1,19 @@
+import { HubConnection } from "@microsoft/signalr";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 
-const ChannelDashboard = ({ availableChannels, setUserConnection, userConnection }) => {
+const ChannelDashboard = ({ availableChannels, setUserConnection, userConnection, connection, setMessages }) => {
   
 let navigate = useNavigate()
 
 const handleClick = (e) => {
-  const values = userConnection
-  values.channel = availableChannels[e.target.id - 1]
-  console.log(values)
-  setUserConnection(values)
-  navigate(values.channel.name)
+  // const newUserConnecion = userConnection
+  // newUserConnecion.channel = availableChannels[e.target.id - 1]
+  // console.log(values)
+  // console.log(availableChannels[e.target.id - 1])
+  setMessages([])
+  connection.send("JoinChannel", availableChannels[e.target.id - 1])
+  // setUserConnection(newUserConnecion)
+  navigate(availableChannels[e.target.id - 1].name)
 }
 
     return(

@@ -35,7 +35,7 @@ namespace server.Hubs
         public void ReturnLoginAttempt(User user)
         {
             User loginResponse = CreateLoginResponse(user);
-            _connections[Context.ConnectionId] = new UserConnection { User = user };
+            _connections[Context.ConnectionId] = new UserConnection { User = loginResponse };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }
         
@@ -73,6 +73,7 @@ namespace server.Hubs
         
         public void ReturnAvailableChannels()
         {
+            
             List<Channel> channels;
             using (var session = myFactory.OpenSession())
             {
@@ -80,29 +81,44 @@ namespace server.Hubs
                         .ToList();
             }
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
+            _connections[Context.ConnectionId] = new UserConnection();
         }
 
 
-        public async Task JoinChannel(UserConnection userConnection)
+        public async Task JoinChannel(Channel channel)
         {
-            _connections[Context.ConnectionId] = userConnection;
+            //_connections[Context.ConnectionId] = userConnection;
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
 
-            ToggleClientToChat();
-
-            int lastId = 0;
-            List<Message> messages = RetrieveMessagesFromDB(userConnection.Channel);
-            messages.ForEach(async m =>
+            try
             {
-                lastId = m.Id;
+                _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+                if (userConnection == null) return;
 
-                await SendMessageToThisClient(m);
-            });
+                userConnection.Channel = channel;
+                _connections[Context.ConnectionId] = userConnection;
 
-            await SendMessageToEntireGroup($"{userConnection.User.Username} has entered {userConnection.Channel.Name}", true);
+                await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
 
-            SendUsersInChannel(userConnection.Channel.Name);
+                //ToggleClientToChat();
+
+                List<Message> messages = RetrieveMessagesFromDB(userConnection.Channel);
+                messages.ForEach(async m =>
+                {
+                    m.User.Password = "";
+                    await SendMessageToThisClient(m);
+                });
+
+                if (userConnection.User != null)
+                    await SendMessageToEntireGroup($"{userConnection.User.Username} has entered {userConnection.Channel.Name}", true);
+
+                //SendUsersInChannel(userConnection.Channel.Name);
+            }
+            catch (Exception exception)
+            {
+                
+                //throw;
+            }
         }
 
         public Task SendMessageToThisClient(Message message)
@@ -253,17 +269,17 @@ namespace server.Hubs
         //AN ERROR
         private void SendUsersInChannel(string channel)
         {
-            var names = new List<string>();
-            var data = _connections.Values
-                .Where(c => c.Channel.Name == channel)
-                .ToList();
+            //var names = new List<string>();
+            //var data = _connections.Values
+            //    .Where(c => c.Channel.Name == channel)
+            //    .ToList();
 
-            foreach (var name in data)
-            {
-                names.Add(name.User.Username);
-            }
+            //foreach (var name in data)
+            //{
+            //    names.Add(name.User.Username);
+            //}
             
-            Clients.Group(channel).SendAsync("ReturnedConnectedUsers", names);
+            //Clients.Group(channel).SendAsync("ReturnedConnectedUsers", names);
         }
 
         //AN ERROR
@@ -289,6 +305,8 @@ namespace server.Hubs
 
             using ( var session = myFactory.OpenSession())
             {
+                
+                // ACCIDENTLY RETRIEVES PASSWORD HASH AS WELL
                 try
                 {
                     roomMessages = session.Query<Message>()

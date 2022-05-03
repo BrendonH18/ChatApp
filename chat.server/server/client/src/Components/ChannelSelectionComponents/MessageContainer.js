@@ -16,10 +16,11 @@ const MessageContainer = ({ messages }) => {
     <div className='message-container' style={{overflowX: "hidden", overflowY: "scroll"}}>
     
        {messages.map((message, index) => {
+         
         return(
         <div className='message row d-grid' key={index}>
           <div className="">
-          <div className='user'>{message.username} - {formatDate(message.created_on)}:</div>
+          <div className='user'>{message.user.username} - {formatDate(message.created_on)}:</div>
           <div className='text'>{message.text}</div>
           </div>
         </div>

@@ -33,21 +33,21 @@ const LoginDashboard = ({userConnection, setUserConnection}) => {
   //   switch (loginType) {
   //     case "Returning":
   //       return <div>
-  //         <Form.Group>
-  //           <Form.Control 
-  //             placeholder="Username..." 
-  //             onChange={e => setUsername(e.target.value)} />
-  //           <Form.Control
-  //             placeholder="Password..." 
-  //             onChange={e => setPassword(e.target.value)} />
-  //         </Form.Group>
+        //   <Form.Group>
+        //     <Form.Control 
+        //       placeholder="Username..." 
+        //       onChange={e => setUsername(e.target.value)} />
+        //     <Form.Control
+        //       placeholder="Password..." 
+        //       onChange={e => setPassword(e.target.value)} />
+        //   </Form.Group>
       
-  //         <Button
-  //           variant='success' 
-  //           type='submit' 
-  //           disabled={!username || !password}
-  //         >User Login</Button>
-  //       </div>;
+        //   <Button
+        //     variant='success' 
+        //     type='submit' 
+        //     disabled={!username || !password}
+        //   >User Login</Button>
+        // </div>;
   //     case "Create":
   //       return <div>
   //         <Form.Group>
@@ -64,9 +64,9 @@ const LoginDashboard = ({userConnection, setUserConnection}) => {
   //           type='submit' 
   //           disabled={!username || !password}
   //         >Create New User</Button>
-  //       </div>;
-  //     case "Guest":
-  //       return <div>
+  // //       </div>;
+  // //     case "Guest":
+  // //       return <div>
   //           <Form.Group>
   //             <Form.Control 
   //               placeholder="Username..." 
@@ -124,7 +124,7 @@ const LoginDashboard = ({userConnection, setUserConnection}) => {
     <button onClick={() => navigate("Returning")}>Returning</button>
     <button onClick={() => navigate("Guest")}>Guest</button>
     <button onClick={() => toggleUser()}>Update User</button>
-    <h2>User Logged In? - {userConnection.user.isPasswordValid.toString()}</h2>
+    {/* <h2>User Logged In? - {userConnection.user.isPasswordValid.toString()}</h2> */}
     <Outlet/>
     </>
 
