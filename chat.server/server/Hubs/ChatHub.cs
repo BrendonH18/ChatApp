@@ -73,7 +73,7 @@ namespace server.Hubs
         
         public void ReturnAvailableChannels()
         {
-            
+            _connections[Context.ConnectionId] = new UserConnection();
             List<Channel> channels;
             using (var session = myFactory.OpenSession())
             {
@@ -81,44 +81,27 @@ namespace server.Hubs
                         .ToList();
             }
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
-            _connections[Context.ConnectionId] = new UserConnection();
         }
 
 
         public async Task JoinChannel(Channel channel)
         {
-            //_connections[Context.ConnectionId] = userConnection;
-
-
-            try
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            if (userConnection == null) return;
+            if (userConnection.Channel != null && userConnection.Channel.Id != channel.Id)
+                await SendMessageToEntireGroup($"{userConnection.User.Username} has left {userConnection.Channel.Name}", true);
+            userConnection.Channel = channel;
+            _connections[Context.ConnectionId] = userConnection;
+            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
+            List<Message> messages = RetrieveMessagesFromDB();
+            messages.ForEach(async m =>
             {
-                _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-                if (userConnection == null) return;
-
-                userConnection.Channel = channel;
-                _connections[Context.ConnectionId] = userConnection;
-
-                await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
-
-                //ToggleClientToChat();
-
-                List<Message> messages = RetrieveMessagesFromDB(userConnection.Channel);
-                messages.ForEach(async m =>
-                {
-                    m.User.Password = "";
-                    await SendMessageToThisClient(m);
-                });
-
-                if (userConnection.User != null)
-                    await SendMessageToEntireGroup($"{userConnection.User.Username} has entered {userConnection.Channel.Name}", true);
-
-                //SendUsersInChannel(userConnection.Channel.Name);
-            }
-            catch (Exception exception)
-            {
-                
-                //throw;
-            }
+                m.User.Password = "";
+                await SendMessageToThisClient(m);
+            });
+            if (userConnection.User != null)
+                await SendMessageToEntireGroup($"{userConnection.User.Username} has entered {userConnection.Channel.Name}", true);
+            SendUsersInChannel();
         }
 
         public Task SendMessageToThisClient(Message message)
@@ -133,22 +116,13 @@ namespace server.Hubs
             Message message = new Message();
             message.Created_on = DateTime.UtcNow;
             message.User = userConnection.User;
-            //message.Username = userConnection.User.Username;
             message.Channel = userConnection.Channel;
-            //message.Channel_name = userConnection.Channel.Name;
             message.Text = text;
 
-
-            //Could cast the "Username" and "Channel_name" as strings even though their numbers. Will the database bounce it?
             if (!isBot) 
                 CreateMessageInDB(message);
 
             return Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", message);
-        }
-
-        public Task ToggleClientToChat()
-        {
-            return Clients.Client(Context.ConnectionId).SendAsync("ReturnedToggleDisplay", "Chat");
         }
 
         public void ToggleClientToLobby()
@@ -170,7 +144,7 @@ namespace server.Hubs
 
             _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User };
 
-            SendUsersInChannel(userConnection.Channel.Name);
+            SendUsersInChannel();
 
             ToggleClientToLobby();
         }
@@ -267,19 +241,27 @@ namespace server.Hubs
         }
 
         //AN ERROR
-        private void SendUsersInChannel(string channel)
+        private void SendUsersInChannel()
         {
-            //var names = new List<string>();
-            //var data = _connections.Values
-            //    .Where(c => c.Channel.Name == channel)
-            //    .ToList();
-
-            //foreach (var name in data)
-            //{
-            //    names.Add(name.User.Username);
-            //}
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            if (userConnection == null) return;
+            var names = new List<string>();
+            var data = _connections.Values
+                .Where(c => c.Channel.Name == userConnection.Channel.Name)
+                .ToList()
+                .DefaultIfEmpty(null)
+                ;
+            if(names == null)
+            {
+                Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedConnectedUsers", new List<string> { "None" });
+                return;
+            }
             
-            //Clients.Group(channel).SendAsync("ReturnedConnectedUsers", names);
+            foreach (var name in data)
+            {
+                names.Add(name.User.Username);
+            }
+            Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedConnectedUsers", names);
         }
 
         //AN ERROR
@@ -299,10 +281,11 @@ namespace server.Hubs
             }
         }
 
-        public List<Message> RetrieveMessagesFromDB(Channel channel)
+        public List<Message> RetrieveMessagesFromDB()
         {
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             var roomMessages = new List<Message>();
-
+            if (userConnection == null) return roomMessages;
             using ( var session = myFactory.OpenSession())
             {
                 
@@ -311,7 +294,7 @@ namespace server.Hubs
                 {
                     roomMessages = session.Query<Message>()
                         //issue
-                        .Where(m => m.Channel.Name == channel.Name)
+                        .Where(m => m.Channel.Name == userConnection.Channel.Name)
                         .ToList();
 
                     //session.Flush(); // New
@@ -334,7 +317,7 @@ namespace server.Hubs
             if (userConnection != null && userConnection.Channel != null)
             {
                 Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", new Message { User = new User { Username = _botUser}, Text = $"{userConnection.User} has left the room" });
-                SendUsersInChannel(userConnection.Channel.Name);
+                SendUsersInChannel();
             }
 
             return base.OnDisconnectedAsync(exception);

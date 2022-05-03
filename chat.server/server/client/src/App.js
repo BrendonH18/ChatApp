@@ -187,7 +187,7 @@ function App() {
         </nav>
         <Routes>
           <Route path="/" element={<h2>Welcome Page</h2>}/>
-          <Route path="/Channel/" element={<ChannelDashboard setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
+          <Route path="/Channel/" element={<ChannelDashboard setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path=":ActiveChannel" element={<ActiveChannel messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
           </Route>
           <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
