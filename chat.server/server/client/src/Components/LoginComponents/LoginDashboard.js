@@ -123,6 +123,7 @@ const LoginDashboard = ({userConnection, setUserConnection}) => {
     <button onClick={() => navigate("Create")}>Create</button>
     <button onClick={() => navigate("Returning")}>Returning</button>
     <button onClick={() => navigate("Guest")}>Guest</button>
+    <button onClick={() => navigate("Update")}>Update Password</button>
     <button onClick={() => toggleUser()}>Update User</button>
     {/* <h2>User Logged In? - {userConnection.user.isPasswordValid.toString()}</h2> */}
     <Outlet/>

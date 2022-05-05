@@ -10,11 +10,12 @@ const handleClick = (e) => {
   // newUserConnecion.channel = availableChannels[e.target.id - 1]
   // console.log(values)
   // console.log(availableChannels[e.target.id - 1])
-  setConnectedUsers([])
-  setMessages([])
-  connection.send("JoinChannel", availableChannels[e.target.id - 1])
+  // setConnectedUsers([])
+  // setMessages([])
+  // connection.send("JoinChannel", availableChannels[e.target.id - 1])
   // setUserConnection(newUserConnecion)
-  navigate(availableChannels[e.target.id - 1].name)
+  console.log(availableChannels[e.target.id-1].id)
+  navigate(availableChannels[e.target.id - 1].id.toString())
 }
 
     return(

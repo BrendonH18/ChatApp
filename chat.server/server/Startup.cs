@@ -89,14 +89,14 @@ namespace server
                 //endpoints.MapControllers(); // new jwt
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "client";
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
+            //app.UseSpa(spa =>
+            //{
+            //    spa.Options.SourcePath = "client";
+            //    if (env.IsDevelopment())
+            //    {
+            //        spa.UseReactDevelopmentServer(npmScript: "start");
+            //    }
+            //});
         }
     }
 }

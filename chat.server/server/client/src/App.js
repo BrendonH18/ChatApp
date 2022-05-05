@@ -8,6 +8,7 @@ import ActiveChannel from './Components/ChannelSelectionComponents/ActiveChannel
 import User_CheckReturning from './Components/LoginComponents/User_CheckReturning'
 import User_CreateGuest from './Components/LoginComponents/User_CreateGuest';
 import User_CreateNew from './Components/LoginComponents/User_CreateNew';
+import User_UpdatePassword from './Components/LoginComponents/User_UpdatePassword';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, Outlet} from 'react-router-dom'
 
 function App() {
@@ -56,14 +57,14 @@ function App() {
 
   //NEW
   const [connection, setConnection] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [messages, setMessages] = useState([message1])
+  // const [isLoading, setIsLoading] = useState(false)
+  const [messages, setMessages] = useState([])
   // const [user, setUser] = useState(blankUser)
   // const [channel, setChannel] = useState(blankChannel)
   const [userConnection, setUserConnection] = useState(blankUserConnection)
-  const [availableChannels, setAvailableChannels] = useState(newChannels)
+  const [availableChannels, setAvailableChannels] = useState([])
   // const [toggleDisplay, setToggleDisplay] = useState("Lobby")
-  const [connectedUsers, setConnectedUsers] = useState([user1, user2])
+  const [connectedUsers, setConnectedUsers] = useState([])
 
   
 
@@ -77,7 +78,7 @@ function App() {
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('/chat')
+    .withUrl('https://localhost:44314/chat')
     .withAutomaticReconnect()
     //.configureLogging(LogLevel.Information)
     .build();
@@ -86,6 +87,7 @@ function App() {
 
   useEffect(() => {
     if(connection){
+      console.log("Connection Started")
       connection.start()
       .then(result => {
         
@@ -120,7 +122,8 @@ function App() {
 
         connection.on("ReturnedConnectedUsers", (param) => {
           console.log("Returned Connected Users:", param)
-          setConnectedUsers(param)})
+          setConnectedUsers(param)
+        })
         
         //Send
         connection.send("ReturnAvailableChannels")
@@ -188,12 +191,13 @@ function App() {
         <Routes>
           <Route path="/" element={<h2>Welcome Page</h2>}/>
           <Route path="/Channel/" element={<ChannelDashboard setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
-            <Route path=":ActiveChannel" element={<ActiveChannel messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
+            <Route path=":ActiveChannelID" element={<ActiveChannel availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
           </Route>
           <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path="Returning" element={<User_CheckReturning connection={connection}/>}/>
             <Route path="Create" element={<User_CreateNew connection={connection}/>}/>
             <Route path="Guest" element={<User_CreateGuest connection={connection}/>}/>
+            <Route path="Update" element={<User_UpdatePassword connection={connection}/>}/>
           </Route>
         </Routes>
       </Router>

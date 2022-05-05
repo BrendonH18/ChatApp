@@ -3,17 +3,40 @@ import { Button } from 'react-bootstrap'
 import UserContainer from "./UserContainer";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
+import { useEffect, useState } from "react";
+import { ConsoleLogger } from "@microsoft/signalr/dist/esm/Utils";
 
-const ActiveChannel = ({ messages, connectedUsers, userConnection }) => {
+const ActiveChannel = ({ connection, messages, connectedUsers, userConnection, availableChannels }) => {
   
-    let { ActiveChannel } = useParams();
+    const [isLoading, setIsLoading] = useState(true)
+    let { ActiveChannelID } = useParams();
+    // useEffect(() => {
+    //   if(connection) {
+    //     debugger
+    //     // console.log(ActiveChannel)
+    //     connection.send("JoinChannel", ActiveChannel)
+    //   }
+    // },[connection, ActiveChannel])
+
+    useEffect(() => {
+      let activeChannel = availableChannels[ActiveChannelID - 1 ]
+      if(connection ){
+        connection.send("JoinChannel", activeChannel)
+        console.log(connection)
+        console.log("WOOP!")
+      }
+      console.log(availableChannels[ActiveChannelID - 1])
+      console.log(connection)
+    }, [connection, ActiveChannelID])
+
 
     return(
       <>
+      <h2>{ActiveChannelID}</h2>
       
       
       <div className='chat'>
-      <h2>Chat for "{ActiveChannel}"</h2>
+      <h2>Chat for "{}"</h2>
       <div className="d-grid">
       <Button
       className="leave-room"

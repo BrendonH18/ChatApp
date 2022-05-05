@@ -19,6 +19,8 @@ namespace server.Hubs
         private readonly IDictionary<string, UserConnection> _connections;
         private readonly string _botUser;
         private readonly List<string> _rooms;
+        private readonly User _user;
+        private readonly Channel _channel;
 
         public ChatHub(IDictionary<string, UserConnection> connections, ISessionFactory factory)
         {
@@ -28,6 +30,8 @@ namespace server.Hubs
             //Server
             _botUser = "ChatBot";
             _connections = connections;
+            _user = new User { Id = 0, IsPasswordValid = false, LoginType = "", Password = "", Username = "" };
+            _channel = new Channel { Id = 0, Name = "" };
         }
         //SIGNALR REQUESTS
         //NEW
@@ -35,25 +39,32 @@ namespace server.Hubs
         public void ReturnLoginAttempt(User user)
         {
             User loginResponse = CreateLoginResponse(user);
-            _connections[Context.ConnectionId] = new UserConnection { User = loginResponse };
+            _connections[Context.ConnectionId] = new UserConnection { User = loginResponse, Channel = _channel };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }
-        
+
         public User CreateLoginResponse(User user)
         {
-            if(user == null || !IsKnownLoginType(user.LoginType) )
+            if (user == null || !IsKnownLoginType(user.LoginType))
             {
                 user.Password = null;
                 user.IsPasswordValid = false;
                 return user;
             }
-            if(user.LoginType == "Guest")
+            if(user.LoginType == "Update")
+            {
+                
+            }
+            if (user.LoginType == "Guest")
             {
                 user = AppendNumberToUsername(user);
                 user.IsPasswordValid = true;
+                user.Password = user.Username;
+                user.Id = CreateUserInDB(user);
+                user.Password = "";
                 return user;
             }
-            if(user.LoginType == "Create")
+            if (user.LoginType == "Create")
             {
                 CreateUserInDB(user);
             }
@@ -68,61 +79,77 @@ namespace server.Hubs
             if (loginType == "Guest") return true;
             if (loginType == "Create") return true;
             if (loginType == "Returning") return true;
+            if (loginType == "Update") return true;
             return false;
         }
-        
+
+
+
         public void ReturnAvailableChannels()
         {
-            _connections[Context.ConnectionId] = new UserConnection();
+            List<Channel> channels = QueryDBforChannels();
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
+        }
+        public List<Channel> QueryDBforChannels()
+        {
             List<Channel> channels;
             using (var session = myFactory.OpenSession())
             {
                 channels = session.Query<Channel>()
                         .ToList();
             }
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
+            return channels;
         }
 
-
-        public async Task JoinChannel(Channel channel)
+        public async Task JoinChannel(Channel newChannel)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            if (userConnection == null) return;
-            if (userConnection.Channel != null && userConnection.Channel.Id != channel.Id)
-                await SendMessageToEntireGroup($"{userConnection.User.Username} has left {userConnection.Channel.Name}", true);
-            userConnection.Channel = channel;
-            _connections[Context.ConnectionId] = userConnection;
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
-            List<Message> messages = RetrieveMessagesFromDB();
+            await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", "Reset");
+            await SendStoredMessagesToCurrentClient(newChannel);
+            if (userConnection == null) userConnection = new UserConnection { User = _user, Channel = _channel };
+            SwitchSignalRChannelFromTo(userConnection.Channel, newChannel);
+            if (userConnection.User.Id != 0) SendNewUserUpdatesToChannel(userConnection.Channel, newChannel, userConnection.User.Username);
+            //var channels = QueryDBforChannels();
+            //Channel channel = channels.Where(x => x.Id == channelID).FirstOrDefault();
+            _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User, Channel = newChannel };
+            SendUsersInChannel(newChannel);
+            SendUsersInChannel(userConnection.Channel);
+        }
+        public async void SendNewUserUpdatesToChannel(Channel oldChannel, Channel newChannel, string username)
+        {
+            await SendMessageToChannel(newChannel, $"{username} has entered {newChannel.Name}", true);
+            await SendMessageToChannel(oldChannel, $"{username} has left {oldChannel.Name}", true);
+        }
+        public async void SwitchSignalRChannelFromTo (Channel oldChannel, Channel newChannel)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, oldChannel.Name);
+            await Groups.AddToGroupAsync(Context.ConnectionId, newChannel.Name);
+        }
+        public Task SendStoredMessagesToCurrentClient(Channel channel)
+        {
+            List<Message> messages = RetrieveMessagesFromDB(channel);
             messages.ForEach(async m =>
             {
                 m.User.Password = "";
-                await SendMessageToThisClient(m);
+                await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", m);
             });
-            if (userConnection.User != null)
-                await SendMessageToEntireGroup($"{userConnection.User.Username} has entered {userConnection.Channel.Name}", true);
-            SendUsersInChannel();
+            return Task.CompletedTask;
         }
 
-        public Task SendMessageToThisClient(Message message)
-        {
-            return Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", message);
-        }
-
-        public Task SendMessageToEntireGroup(string text, bool isBot = false)
+        public Task SendMessageToChannel(Channel channel, string text, bool isBot = false)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
             Message message = new Message();
             message.Created_on = DateTime.UtcNow;
             message.User = userConnection.User;
-            message.Channel = userConnection.Channel;
+            message.Channel = channel;
             message.Text = text;
 
             if (!isBot) 
                 CreateMessageInDB(message);
 
-            return Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", message);
+            return Clients.Group(channel.Name).SendAsync("ReturnedMessage", message);
         }
 
         public void ToggleClientToLobby()
@@ -134,20 +161,20 @@ namespace server.Hubs
             ReturnAvailableChannels();
         }
 
-        public async Task LeaveChannel()
-        {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+        //public async Task LeaveChannel()
+        //{
+        //    _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
 
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
+        //    await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
 
-            await SendMessageToEntireGroup($"{userConnection.User.Username} has left {userConnection.Channel.Name}", true);
+        //    await SendMessageToEntireGroup($"{userConnection.User.Username} has left {userConnection.Channel.Name}", true);
 
-            _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User };
+        //    _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User };
 
-            SendUsersInChannel();
+        //    SendUsersInChannel();
 
-            ToggleClientToLobby();
-        }
+        //    ToggleClientToLobby();
+        //}
 
         public void LogOut()
         {
@@ -156,7 +183,8 @@ namespace server.Hubs
 
         public void SendMessage(string message)
         {
-            SendMessageToEntireGroup(message);
+            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            SendMessageToChannel(userConnection.Channel, message);
         }
 
         public void UpdatePassword(string newPassword)
@@ -175,7 +203,7 @@ namespace server.Hubs
             try
             {
                 _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-                if (userConnection == null) return false;
+                if (userConnection == null ) return false;
 
                 newPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
 
@@ -215,7 +243,7 @@ namespace server.Hubs
             }
         }
 
-        public void CreateUserInDB(User user)
+        public int CreateUserInDB(User user)
         {
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             
@@ -224,6 +252,7 @@ namespace server.Hubs
                 session.Save(user);
                 session.Flush();
             }
+            return user.Id;
         }
 
 
@@ -240,70 +269,32 @@ namespace server.Hubs
             return user;
         }
 
-        //AN ERROR
-        private void SendUsersInChannel()
+        private void SendUsersInChannel(Channel channel)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            if (userConnection == null) return;
-            var names = new List<string>();
-            var data = _connections.Values
-                .Where(c => c.Channel.Name == userConnection.Channel.Name)
-                .ToList()
-                .DefaultIfEmpty(null)
-                ;
-            if(names == null)
-            {
-                Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedConnectedUsers", new List<string> { "None" });
-                return;
-            }
-            
-            foreach (var name in data)
-            {
-                names.Add(name.User.Username);
-            }
-            Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedConnectedUsers", names);
+            var connectedUsers = _connections
+                .Where(x => x.Value.Channel.Id == channel.Id && x.Value.User.Id != 0)
+                .ToList();
+
+            Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
         }
 
-        //AN ERROR
         public void CreateMessageInDB(Message message)
         {
             using (var session = myFactory.OpenSession())
             {
-                try
-                {
-                    session.Save(message);
-                    session.Flush(); // New
-                }
-                catch (Exception e)
-                {
-                    var ErrorOnCreateMessage = e;
-                }
+                session.Save(message);
+                session.Flush(); // New
             }
         }
 
-        public List<Message> RetrieveMessagesFromDB()
+        public List<Message> RetrieveMessagesFromDB(Channel channel)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             var roomMessages = new List<Message>();
-            if (userConnection == null) return roomMessages;
             using ( var session = myFactory.OpenSession())
             {
-                
-                // ACCIDENTLY RETRIEVES PASSWORD HASH AS WELL
-                try
-                {
-                    roomMessages = session.Query<Message>()
-                        //issue
-                        .Where(m => m.Channel.Name == userConnection.Channel.Name)
-                        .ToList();
-
-                    //session.Flush(); // New
-                }
-                catch (Exception e)
-                {
-                    var ErrorOnRetrieveMessage = e;
-                }
-                
+                roomMessages = session.Query<Message>()
+                    .Where(m => m.Channel.Name == channel.Name)
+                    .ToList();
             }
             return roomMessages;
         }
@@ -312,14 +303,11 @@ namespace server.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            if (userConnection.User.IsPasswordValid == true)
+                SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
             _connections.Remove(Context.ConnectionId);
-
-            if (userConnection != null && userConnection.Channel != null)
-            {
-                Clients.Group(userConnection.Channel.Name).SendAsync("ReturnedMessage", new Message { User = new User { Username = _botUser}, Text = $"{userConnection.User} has left the room" });
-                SendUsersInChannel();
-            }
-
+            if (userConnection.Channel != null)
+                SendUsersInChannel(userConnection.Channel);
             return base.OnDisconnectedAsync(exception);
         }
     }
