@@ -12,10 +12,7 @@ namespace server.Hubs
 {
     public class ChatHub : Hub
     {
-        //NHibernate
         private ISessionFactory myFactory;
-
-        //Server
         private readonly IDictionary<string, UserConnection> _connections;
         private readonly string _botUser;
         private readonly List<string> _rooms;
@@ -24,18 +21,12 @@ namespace server.Hubs
 
         public ChatHub(IDictionary<string, UserConnection> connections, ISessionFactory factory)
         {
-            //NHibernate
             myFactory = factory;
-
-            //Server
             _botUser = "ChatBot";
             _connections = connections;
             _user = new User { Id = 0, IsPasswordValid = false, LoginType = "", Password = "", Username = "" };
             _channel = new Channel { Id = 0, Name = "" };
         }
-        //SIGNALR REQUESTS
-        //NEW
-
         public void ReturnLoginAttempt(User user)
         {
             User loginResponse = CreateLoginResponse(user);
@@ -45,33 +36,31 @@ namespace server.Hubs
 
         public User CreateLoginResponse(User user)
         {
-            if (user == null || !IsKnownLoginType(user.LoginType))
+            if (!IsKnownLoginType(user.LoginType))
             {
                 user.Password = null;
                 user.IsPasswordValid = false;
                 return user;
             }
-            if(user.LoginType == "Update")
+            switch (user.LoginType)
             {
-                
+                case "Guest":
+                    user = AppendNumberToUsername(user);
+                    user.Password = user.Username;
+                    goto case "Create";
+                case "Create":
+                    user = CreateUserInDB(user);
+                    user.Password = user.Username;
+                    goto case "Returning";
+                case "Returning":
+                    user = IsValid(user);
+                    user.Password = null;
+                    return user;
+                case "Update":
+                    return user;
+                default:
+                    return user;
             }
-            if (user.LoginType == "Guest")
-            {
-                user = AppendNumberToUsername(user);
-                user.IsPasswordValid = true;
-                user.Password = user.Username;
-                user.Id = CreateUserInDB(user);
-                user.Password = "";
-                return user;
-            }
-            if (user.LoginType == "Create")
-            {
-                CreateUserInDB(user);
-            }
-
-            user = IsValid(user);
-            user.Password = null;
-            return user;
         }
 
         public bool IsKnownLoginType(string loginType)
@@ -152,35 +141,6 @@ namespace server.Hubs
             return Clients.Group(channel.Name).SendAsync("ReturnedMessage", message);
         }
 
-        public void ToggleClientToLobby()
-        {
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedToggleDisplay", "Lobby");
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedChannel", new { });
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedConnectedUsers", new List<string>());
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", "Reset");
-            ReturnAvailableChannels();
-        }
-
-        //public async Task LeaveChannel()
-        //{
-        //    _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-
-        //    await Groups.RemoveFromGroupAsync(Context.ConnectionId, userConnection.Channel.Name);
-
-        //    await SendMessageToEntireGroup($"{userConnection.User.Username} has left {userConnection.Channel.Name}", true);
-
-        //    _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User };
-
-        //    SendUsersInChannel();
-
-        //    ToggleClientToLobby();
-        //}
-
-        public void LogOut()
-        {
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", new { });
-        }
-
         public void SendMessage(string message)
         {
             _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
@@ -243,7 +203,7 @@ namespace server.Hubs
             }
         }
 
-        public int CreateUserInDB(User user)
+        public User CreateUserInDB(User user)
         {
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             
@@ -252,7 +212,7 @@ namespace server.Hubs
                 session.Save(user);
                 session.Flush();
             }
-            return user.Id;
+            return user;
         }
 
 
@@ -302,13 +262,21 @@ namespace server.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            if (userConnection.User.IsPasswordValid == true)
-                SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
-            _connections.Remove(Context.ConnectionId);
-            if (userConnection.Channel != null)
-                SendUsersInChannel(userConnection.Channel);
-            return base.OnDisconnectedAsync(exception);
+            try
+            {
+                _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+                if (userConnection.User.IsPasswordValid == true)
+                    SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
+                _connections.Remove(Context.ConnectionId);
+                if (userConnection.Channel != null)
+                    SendUsersInChannel(userConnection.Channel);
+                return base.OnDisconnectedAsync(exception);
+            }
+            catch (Exception)
+            {
+                return Task.CompletedTask;
+                //throw;
+            }
         }
     }
 }

@@ -57,7 +57,7 @@ function App() {
 
   //NEW
   const [connection, setConnection] = useState(null)
-  // const [isLoading, setIsLoading] = useState(false)
+  const [isConnectionLoading, setIsConnectionLoading] = useState(true)
   const [messages, setMessages] = useState([])
   // const [user, setUser] = useState(blankUser)
   // const [channel, setChannel] = useState(blankChannel)
@@ -91,6 +91,7 @@ function App() {
       connection.start()
       .then(result => {
         
+
         //Returned
         connection.on("ReturnedMessage", (param) => { 
           console.log("Returned Message:", param)
@@ -114,7 +115,8 @@ function App() {
 
         connection.on("ReturnedAvailableChannels", (param) => {
           console.log("Returned Available Channels:",param)
-          setAvailableChannels( param )})
+          setAvailableChannels( param )
+          setIsConnectionLoading(false)})
 
         // connection.on("ReturnedToggleDisplay", (param) => {
         //   console.log("Returned Toggle:",param)
@@ -127,6 +129,8 @@ function App() {
         
         //Send
         connection.send("ReturnAvailableChannels")
+        
+        
         
       })
       .catch(e => console.log(e))
@@ -191,7 +195,7 @@ function App() {
         <Routes>
           <Route path="/" element={<h2>Welcome Page</h2>}/>
           <Route path="/Channel/" element={<ChannelDashboard setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
-            <Route path=":ActiveChannelID" element={<ActiveChannel availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
+            <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
           </Route>
           <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path="Returning" element={<User_CheckReturning connection={connection}/>}/>

@@ -6,9 +6,8 @@ import SendMessageForm from "./SendMessageForm";
 import { useEffect, useState } from "react";
 import { ConsoleLogger } from "@microsoft/signalr/dist/esm/Utils";
 
-const ActiveChannel = ({ connection, messages, connectedUsers, userConnection, availableChannels }) => {
-  
-    const [isLoading, setIsLoading] = useState(true)
+const ActiveChannel = ({ connection, messages, isConnectionLoading, connectedUsers, userConnection, availableChannels }) => {
+
     let { ActiveChannelID } = useParams();
     // useEffect(() => {
     //   if(connection) {
@@ -20,31 +19,28 @@ const ActiveChannel = ({ connection, messages, connectedUsers, userConnection, a
 
     useEffect(() => {
       let activeChannel = availableChannels[ActiveChannelID - 1 ]
-      if(connection ){
+      if(connection){
+        console.log(activeChannel)
         connection.send("JoinChannel", activeChannel)
-        console.log(connection)
-        console.log("WOOP!")
       }
-      console.log(availableChannels[ActiveChannelID - 1])
-      console.log(connection)
-    }, [connection, ActiveChannelID])
+    }, [isConnectionLoading, ActiveChannelID])
 
 
     return(
       <>
       <h2>{ActiveChannelID}</h2>
-      
-      
+
+
       <div className='chat'>
       <h2>Chat for "{}"</h2>
       <div className="d-grid">
-      <Button
+      {/* <Button
       className="leave-room"
       variant="danger"
       onClick={ e => {
         e.preventDefault();
         console.log("Leave Room Pressed");
-      }}>Leave Chat</Button>
+      }}>Leave Chat</Button> */}
      </div>
      <div className='row'>
        <div className="col-3 d-grid">
@@ -53,18 +49,18 @@ const ActiveChannel = ({ connection, messages, connectedUsers, userConnection, a
       </div>
 
       <div className="col-9 d-grid">
-      <MessageContainer 
+      <MessageContainer
       messages={messages}/>
 
-      <SendMessageForm
-      userConnection={userConnection} 
+      <SendMessageForm connection={connection}
+      userConnection={userConnection}
       />
       </div>
       </div>
     </div>
-      
+
       </>
     )
   }
-  
+
   export default ActiveChannel;

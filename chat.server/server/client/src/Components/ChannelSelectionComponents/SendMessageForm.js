@@ -1,13 +1,13 @@
 import { Form, Button } from "react-bootstrap";
 import { useState } from 'react';
 
-const SendMessageForm = ({ userConnection }) => {
+const SendMessageForm = ({ userConnection, connection }) => {
   
   const [text, setText] = useState('');
 
   const sendMessage = (param) =>{
     console.log("MESSAGE:", param)
-      // connection.send("SendMessage", param);
+    connection.send("SendMessage", param);
   }
 
   return(
