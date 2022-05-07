@@ -6,20 +6,21 @@ using Microsoft.AspNetCore.SignalR;
 using NHibernate;
 using NHibernate.Cfg;
 using NHibernate.Linq;
+using server.Hubs.HubSupport;
 using server.Models;
 
 namespace server.Hubs
 {
     public class ChatHub : Hub
     {
-        private ISessionFactory myFactory;
-        private readonly IDictionary<string, UserConnection> _connections;
+        private readonly ISessionFactory myFactory;
+        private readonly IAppConnection _connections;
         private readonly string _botUser;
         private readonly List<string> _rooms;
         private readonly User _user;
         private readonly Channel _channel;
 
-        public ChatHub(IDictionary<string, UserConnection> connections, ISessionFactory factory)
+        public ChatHub(IAppConnection connections, ISessionFactory factory)
         {
             myFactory = factory;
             _botUser = "ChatBot";
@@ -30,7 +31,8 @@ namespace server.Hubs
         public void ReturnLoginAttempt(User user)
         {
             User loginResponse = CreateLoginResponse(user);
-            _connections[Context.ConnectionId] = new UserConnection { User = loginResponse, Channel = _channel };
+            _connections.UpdateConnection(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
+            //_connections[Context.ConnectionId] = new UserConnection { User = loginResponse, Channel = _channel };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }
 
@@ -93,7 +95,8 @@ namespace server.Hubs
 
         public async Task JoinChannel(Channel newChannel)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
+            //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", "Reset");
             await SendStoredMessagesToCurrentClient(newChannel);
             if (userConnection == null) userConnection = new UserConnection { User = _user, Channel = _channel };
@@ -101,7 +104,8 @@ namespace server.Hubs
             if (userConnection.User.Id != 0) SendNewUserUpdatesToChannel(userConnection.Channel, newChannel, userConnection.User.Username);
             //var channels = QueryDBforChannels();
             //Channel channel = channels.Where(x => x.Id == channelID).FirstOrDefault();
-            _connections[Context.ConnectionId] = new UserConnection { User = userConnection.User, Channel = newChannel };
+            _connections.UpdateConnection(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
+            //_connections[Context.ConnectionId] = new UserConnection { User = userConnection.User, Channel = newChannel };
             SendUsersInChannel(newChannel);
             SendUsersInChannel(userConnection.Channel);
         }
@@ -128,7 +132,8 @@ namespace server.Hubs
 
         public Task SendMessageToChannel(Channel channel, string text, bool isBot = false)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
 
             Message message = new Message();
             message.Created_on = DateTime.UtcNow;
@@ -144,7 +149,8 @@ namespace server.Hubs
 
         public void SendMessage(string message)
         {
-            _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
+            //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             SendMessageToChannel(userConnection.Channel, message);
         }
 
@@ -163,7 +169,8 @@ namespace server.Hubs
         {
             try
             {
-                _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+                UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
+                //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
                 if (userConnection == null ) return false;
 
                 newPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
@@ -232,9 +239,12 @@ namespace server.Hubs
 
         private void SendUsersInChannel(Channel channel)
         {
-            var connectedUsers = _connections
-                .Where(x => x.Value.Channel.Id == channel.Id && x.Value.User.Id != 0)
-                .ToList();
+            var connectedUsers = _connections.GetConnectionsOnChannel(channel);
+                
+                //_connections
+                //.Where(x => x.Value.Channel.Id == channel.Id && x.Value.User.Id != 0)
+                //.ToList();
+
 
             Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
         }
@@ -263,21 +273,24 @@ namespace server.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            try
-            {
-                _connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-                if (userConnection.User.IsPasswordValid == true)
-                    SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
-                _connections.Remove(Context.ConnectionId);
-                if (userConnection.Channel != null)
-                    SendUsersInChannel(userConnection.Channel);
-                return base.OnDisconnectedAsync(exception);
-            }
-            catch (Exception)
-            {
-                return Task.CompletedTask;
-                //throw;
-            }
+            //try
+            //{
+            //    UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
+            //    //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
+            //    if (userConnection.User.IsPasswordValid == true)
+            //        SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
+            //    _connections.RemoveConnection(Context.ConnectionId);
+            //    //_connections.Remove(Context.ConnectionId);
+            //    if (userConnection.Channel != null)
+            //        SendUsersInChannel(userConnection.Channel);
+            //    return base.OnDisconnectedAsync(exception);
+            //}
+            //catch (Exception)
+            //{
+            //    return Task.CompletedTask;
+            //    //throw;
+            //}
+            return Task.CompletedTask;
         }
     }
 }

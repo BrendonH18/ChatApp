@@ -18,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using System.Configuration;
 using NHibernate;
 using NHibernate.NetCore;
-
+using server.Hubs.HubSupport;
 
 namespace server
 {
@@ -45,7 +45,8 @@ namespace server
                         .AllowCredentials();
                 });
             });
-            services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
+            //services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
+            services.AddSingleton<IAppConnection, AppConnection>(options => new AppConnection());
 
             //NHibernate Automated
             var productionProps = new Dictionary<string, string>();
