@@ -79,6 +79,7 @@ namespace server.Hubs
             List<Channel> channels = QueryDBforChannels();
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
         }
+
         public List<Channel> QueryDBforChannels()
         {
             List<Channel> channels;
