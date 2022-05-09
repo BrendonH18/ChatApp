@@ -19,6 +19,8 @@ namespace server.Hubs
         private readonly List<string> _rooms;
         private readonly User _user;
         private readonly Channel _channel;
+        private readonly LoginManagement _loginManagement;
+        private readonly DatabaseQueries _db;
 
         public ChatHub(IAppConnection connections, ISessionFactory factory)
         {
@@ -27,85 +29,37 @@ namespace server.Hubs
             _connections = connections;
             _user = new User { Id = 0, IsPasswordValid = false, LoginType = "", Password = "", Username = "" };
             _channel = new Channel { Id = 0, Name = "" };
+            _loginManagement = new LoginManagement(factory);
+            _db = new DatabaseQueries(factory);
+            _
         }
         public void ReturnLoginAttempt(User user)
         {
-            User loginResponse = CreateLoginResponse(user);
+            User loginResponse = _loginManagement.CreateLoginResponse(user);
             _connections.UpdateConnection(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
             //_connections[Context.ConnectionId] = new UserConnection { User = loginResponse, Channel = _channel };
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
-        }
-
-        public User CreateLoginResponse(User user)
-        {
-            if (!IsKnownLoginType(user.LoginType))
-            {
-                user.Password = null;
-                user.IsPasswordValid = false;
-                return user;
-            }
-            switch (user.LoginType)
-            {
-                case "Guest":
-                    user = AppendNumberToUsername(user);
-                    user.Password = user.Username;
-                    goto case "Create";
-                case "Create":
-                    user = CreateUserInDB(user);
-                    user.Password = user.Username;
-                    goto case "Returning";
-                case "Returning":
-                    user = IsValid(user);
-                    user.Password = null;
-                    return user;
-                case "Update":
-                    return user;
-                default:
-                    return user;
-            }
-        }
-
-        public bool IsKnownLoginType(string loginType)
-        {
-            if (loginType == "Guest") return true;
-            if (loginType == "Create") return true;
-            if (loginType == "Returning") return true;
-            if (loginType == "Update") return true;
-            return false;
         }
 
 
 
         public void ReturnAvailableChannels()
         {
-            List<Channel> channels = QueryDBforChannels();
+            List<Channel> channels = _db.QueryDBforChannels();
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
         }
 
-        public List<Channel> QueryDBforChannels()
-        {
-            List<Channel> channels;
-            using (var session = myFactory.OpenSession())
-            {
-                channels = session.Query<Channel>()
-                        .ToList();
-            }
-            return channels;
-        }
+        
 
         public async Task JoinChannel(Channel newChannel)
         {
             UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
-            //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
             await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", "Reset");
             await SendStoredMessagesToCurrentClient(newChannel);
             if (userConnection == null) userConnection = new UserConnection { User = _user, Channel = _channel };
             SwitchSignalRChannelFromTo(userConnection.Channel, newChannel);
             if (userConnection.User.Id != 0) SendNewUserUpdatesToChannel(userConnection.Channel, newChannel, userConnection.User.Username);
-            //var channels = QueryDBforChannels();
-            //Channel channel = channels.Where(x => x.Id == channelID).FirstOrDefault();
             _connections.UpdateConnection(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
-            //_connections[Context.ConnectionId] = new UserConnection { User = userConnection.User, Channel = newChannel };
             SendUsersInChannel(newChannel);
             SendUsersInChannel(userConnection.Channel);
         }
@@ -193,12 +147,7 @@ namespace server.Hubs
             return true;
         }
 
-        private User AppendNumberToUsername(User user)
-        {
-            var number = new Random().Next(1000, 10000).ToString();
-            user.Username = user.Username += number;
-            return user;
-        }
+        
 
         private User RetrieveCredential(string username)
         {
@@ -224,18 +173,7 @@ namespace server.Hubs
         }
 
 
-        private User IsValid(User user)
-        {
-            var localUser = RetrieveCredential(user.Username);
-            if (localUser == null)
-            {
-                user.IsPasswordValid = false;
-                return user;
-            }
-            user.IsPasswordValid = BCrypt.Net.BCrypt.Verify(user.Password, localUser.Password);
-            user.Id = user.IsPasswordValid ? localUser.Id : 0;
-            return user;
-        }
+        
 
         private void SendUsersInChannel(Channel channel)
         {
