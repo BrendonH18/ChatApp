@@ -1,6 +1,5 @@
 ﻿using server.Models;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace server.Hubs.HubSupport
 {
@@ -12,7 +11,7 @@ namespace server.Hubs.HubSupport
 
         List<UserConnection> GetConnectionsOnChannel(Channel channel);
     }
-    public class AppConnection : IAppConnection
+    public class ConnectionManagement : IAppConnection
     {
         public readonly Dictionary<string, UserConnection> _connections = new Dictionary<string, UserConnection>();
 
@@ -26,7 +25,8 @@ namespace server.Hubs.HubSupport
         }
         public UserConnection GetConnection (string connectionId)
         {
-            return _connections[connectionId];
+            _connections.TryGetValue(connectionId, out UserConnection userConnection);
+            return userConnection;
         }
         //public List<UserConnection> GetConnectionsOnChannel(Channel channel)
         //{

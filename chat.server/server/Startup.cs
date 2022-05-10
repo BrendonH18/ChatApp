@@ -46,7 +46,7 @@ namespace server
                 });
             });
             //services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
-            services.AddSingleton<IAppConnection, AppConnection>(options => new AppConnection());
+            services.AddSingleton<IAppConnection, ConnectionManagement>(options => new ConnectionManagement());
 
             //NHibernate Automated
             var productionProps = new Dictionary<string, string>();

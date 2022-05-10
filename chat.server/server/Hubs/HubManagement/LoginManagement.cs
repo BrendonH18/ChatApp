@@ -1,17 +1,16 @@
-﻿using NHibernate;
-using server.Models;
+﻿using server.Models;
 using System;
-using System.Linq;
 
 namespace server.Hubs.HubSupport
 {
     public class LoginManagement
     {
-        private readonly DatabaseQueries db;
-        public LoginManagement(ISessionFactory factory)
+        private readonly QueryManagement _queryManagement;
+        public LoginManagement(QueryManagement queryManagement)
         {
-            DatabaseQueries db = new DatabaseQueries(factory);
+            _queryManagement = queryManagement;
         }
+
         public User CreateLoginResponse(User user)
         {
             if (!IsKnownLoginType(user.LoginType))
@@ -27,7 +26,7 @@ namespace server.Hubs.HubSupport
                     user.Password = user.Username;
                     goto case "Create";
                 case "Create":
-                    user = db.CreateUserInDB(user);
+                    user = _queryManagement.CreateUserInDB(user);
                     user.Password = user.Username;
                     goto case "Returning";
                 case "Returning":
@@ -58,15 +57,21 @@ namespace server.Hubs.HubSupport
         
         private User IsValid(User user)
         {
-            var localUser = db.RetrieveCredential(user.Username);
+            var localUser = _queryManagement.RetrieveCredential(user.Username);
             if (localUser == null)
             {
                 user.IsPasswordValid = false;
                 return user;
             }
-            user.IsPasswordValid = BCrypt.Net.BCrypt.Verify(user.Password, localUser.Password);
+            user.IsPasswordValid = IsValidPassword(user.Password, localUser.Password);
             user.Id = user.IsPasswordValid ? localUser.Id : 0;
             return user;
+        }
+
+        public bool IsValidPassword(string stringPassword, string hashPassword)
+        {
+            bool isValid = BCrypt.Net.BCrypt.Verify(stringPassword,hashPassword);
+            return isValid;
         }
     }
 }
