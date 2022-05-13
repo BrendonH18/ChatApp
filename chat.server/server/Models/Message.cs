@@ -14,5 +14,6 @@ namespace server.Models
         public virtual string Text { get; set; }
         //public virtual string Channel_name { get; set; }
         public virtual DateTime Created_on { get; set; }
+        public virtual bool isBot { get; set; }
     }
 }

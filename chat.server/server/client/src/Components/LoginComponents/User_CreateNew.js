@@ -6,15 +6,13 @@ const User_CreateNew = ({ connection }) => {
   
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [loginType, setLoginType] = useState("Create")
 
   const sendLoginAttempt = () => {
     const user = {
       Username: username,
       Password: password,
-      LoginType: loginType
+      LoginType: "Create"
     }
-    console.log("ReturnLoginAttempt:", user)
     connection.send("ReturnLoginAttempt", user)
   }
 

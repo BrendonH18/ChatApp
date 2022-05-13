@@ -16,7 +16,7 @@ namespace server.Hubs.HubSupport
             myFactory = factory;
         }
 
-        public User RetrieveCredential(string username)
+        public User ReturnUserFromUsername(string username)
         {
             using (var session = myFactory.OpenSession())
             {
@@ -26,7 +26,7 @@ namespace server.Hubs.HubSupport
                 return loCredential;
             }
         }
-        public User CreateUserInDB(User user)
+        public User CreateNewUser(User user)
         {
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
@@ -38,7 +38,7 @@ namespace server.Hubs.HubSupport
             return user;
         }
 
-        public List<Channel> QueryDBforChannels()
+        public List<Channel> ReturnAvailableChannels_List()
         {
             List<Channel> channels;
             using (var session = myFactory.OpenSession())
@@ -49,7 +49,7 @@ namespace server.Hubs.HubSupport
             return channels;
         }
 
-        public List<Message> RetrieveMessagesFromDB(Channel channel)
+        public List<Message> ReturnMessagesByChannel_List(Channel channel)
         {
             List<Message> roomMessages;
             using (var session = myFactory.OpenSession())
@@ -61,7 +61,7 @@ namespace server.Hubs.HubSupport
             return roomMessages;
         }
 
-        public void CreateMessageInDB(Message message)
+        public void InsertMessage(Message message)
         {
             using (var session = myFactory.OpenSession())
             {
@@ -70,30 +70,23 @@ namespace server.Hubs.HubSupport
             }
         }
 
-        public bool UpdatePasswordInDB(string newPassword, UserConnection userConnection)
+        public User UpdatePasswordForUser(User user)
         {
-            try
+            if (user == null) return null;
+            if (!user.IsPasswordValid) return user;
+            string newPassword = BCrypt.Net.BCrypt.HashPassword(user.NewPassword);
+            user.NewPassword = null;
+            using (var session = myFactory.OpenSession())
             {
-                if (userConnection == null) return false;
-
-                newPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
-
-                using (var session = myFactory.OpenSession())
+                using (ITransaction transaction = session.BeginTransaction())
                 {
-                    using (ITransaction transaction = session.BeginTransaction())
-                    {
-                        session.Query<User>()
-                            .Where(x => x.Username == userConnection.User.Username)
-                            .Update(x => new User { Username = userConnection.User.Username, Password = newPassword });
-                        transaction.Commit();
-                    }
+                    session.Query<User>()
+                        .Where(x => x.Username == user.Username)
+                        .Update(x => new User { Username = user.Username, Password = newPassword });
+                    transaction.Commit();
                 }
             }
-            catch (Exception)
-            {
-                return false;
-            }
-            return true;
+            return user;
         }
 
         

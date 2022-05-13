@@ -6,15 +6,13 @@ const User_CheckReturning = ({ connection }) => {
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [loginType, setLoginType] = useState("Returning")
 
     const sendLoginAttempt = () => {
       const user = {
         Username: username,
         Password: password,
-        LoginType: loginType
+        LoginType: "Returning"
       }
-      console.log("ReturnLoginAttempt:", user)
       connection.send("ReturnLoginAttempt", user)
     }
 

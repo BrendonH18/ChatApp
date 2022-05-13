@@ -6,8 +6,11 @@ const SendMessageForm = ({ userConnection, connection }) => {
   const [text, setText] = useState('');
 
   const sendMessage = (param) =>{
-    console.log("MESSAGE:", param)
-    connection.send("SendMessage", param);
+    const message = {
+      text: param,
+      isBot: false
+    }
+    connection.send("SendMessageToChannel", message);
   }
 
   return(

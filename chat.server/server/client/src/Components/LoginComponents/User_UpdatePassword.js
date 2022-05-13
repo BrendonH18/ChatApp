@@ -6,15 +6,15 @@ const User_UpdatePassword = ({ connection }) => {
   
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [loginType, setLoginType] = useState("Create")
+  const [newPassword, setNewPassword] = useState('')
 
   const sendLoginAttempt = () => {
     const user = {
       Username: username,
       Password: password,
-      LoginType: loginType
+      newPassword: newPassword,
+      LoginType: "Update"
     }
-    console.log("ReturnLoginAttempt:", user)
     connection.send("ReturnLoginAttempt", user)
   }
 
@@ -27,6 +27,9 @@ const User_UpdatePassword = ({ connection }) => {
             <Form.Control
               placeholder="Password..." 
               onChange={e => setPassword(e.target.value)} />
+            <Form.Control
+              placeholder="New Password..." 
+              onChange={e => setNewPassword(e.target.value)} />
           </Form.Group>
       
           <Button
@@ -34,7 +37,7 @@ const User_UpdatePassword = ({ connection }) => {
             type='submit'
             onClick={sendLoginAttempt} 
             disabled={!username || !password}
-          >Create New User</Button>
+          >Update User Password</Button>
       </>
     )
   }

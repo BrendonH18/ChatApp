@@ -26,15 +26,15 @@ namespace server.Hubs.HubSupport
                     user.Password = user.Username;
                     goto case "Create";
                 case "Create":
-                    user = _queryManagement.CreateUserInDB(user);
+                    user = _queryManagement.CreateNewUser(user);
                     user.Password = user.Username;
                     goto case "Returning";
                 case "Returning":
-                    user = IsValid(user);
+                    user = IsValidUser(user);
                     user.Password = null;
                     return user;
                 case "Update":
-                    return user;
+                    goto case "Returning";          
                 default:
                     return user;
             }
@@ -55,9 +55,9 @@ namespace server.Hubs.HubSupport
             return user;
         }
         
-        private User IsValid(User user)
+        private User IsValidUser(User user)
         {
-            var localUser = _queryManagement.RetrieveCredential(user.Username);
+            var localUser = _queryManagement.ReturnUserFromUsername(user.Username);
             if (localUser == null)
             {
                 user.IsPasswordValid = false;

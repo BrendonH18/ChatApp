@@ -9,38 +9,23 @@ import { ConsoleLogger } from "@microsoft/signalr/dist/esm/Utils";
 const ActiveChannel = ({ connection, messages, isConnectionLoading, connectedUsers, userConnection, availableChannels }) => {
 
     let { ActiveChannelID } = useParams();
-    // useEffect(() => {
-    //   if(connection) {
-    //     debugger
-    //     // console.log(ActiveChannel)
-    //     connection.send("JoinChannel", ActiveChannel)
-    //   }
-    // },[connection, ActiveChannel])
+    const [activeChannelName, setActiveChannelName] = useState("")
+
 
     useEffect(() => {
       let activeChannel = availableChannels[ActiveChannelID - 1 ]
       if(connection){
-        console.log(activeChannel)
         connection.send("JoinChannel", activeChannel)
+        setActiveChannelName(activeChannel.name)
       }
     }, [isConnectionLoading, ActiveChannelID])
 
-
     return(
       <>
-      <h2>{ActiveChannelID}</h2>
-
+      <h2>Chatroom: {activeChannelName}</h2>
 
       <div className='chat'>
-      <h2>Chat for "{}"</h2>
       <div className="d-grid">
-      {/* <Button
-      className="leave-room"
-      variant="danger"
-      onClick={ e => {
-        e.preventDefault();
-        console.log("Leave Room Pressed");
-      }}>Leave Chat</Button> */}
      </div>
      <div className='row'>
        <div className="col-3 d-grid">

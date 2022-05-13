@@ -1,29 +1,31 @@
 ﻿using server.Models;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace server.Hubs.HubSupport
 {
     public interface IAppConnection
     {
-        void UpdateConnection(string connectionID, UserConnection userConnection);
-        UserConnection GetConnection(string connectionID);
-        void RemoveConnection(string connectionID);
+        void UpdateUserConnection_Void(string connectionID, UserConnection userConnection);
+        UserConnection GetUserConnection_UserConnection(string connectionID);
+        void RemoveUserConnection_Void(string connectionID);
 
-        List<UserConnection> GetConnectionsOnChannel(Channel channel);
+        List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel);
     }
     public class ConnectionManagement : IAppConnection
     {
         public readonly Dictionary<string, UserConnection> _connections = new Dictionary<string, UserConnection>();
 
-        public void UpdateConnection(string connectionId, UserConnection userConnection)
+        public void UpdateUserConnection_Void(string connectionId, UserConnection userConnection)
         {
+            if (userConnection.ConnectionId != connectionId) userConnection.ConnectionId = connectionId;
             _connections[connectionId] = userConnection;
         }
-        public void RemoveConnection(string connectionId)
+        public void RemoveUserConnection_Void(string connectionId)
         {
             _connections.Remove(connectionId);
         }
-        public UserConnection GetConnection (string connectionId)
+        public UserConnection GetUserConnection_UserConnection (string connectionId)
         {
             _connections.TryGetValue(connectionId, out UserConnection userConnection);
             return userConnection;
@@ -35,9 +37,13 @@ namespace server.Hubs.HubSupport
         //        .Where(x => x.Value.Channel.Id == channel.Id && x.Value.User.Id != 0)
         //        .ToList();
         //}
-        public List<UserConnection> GetConnectionsOnChannel(Channel channel)
+        public List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel)
         {
             List<UserConnection> connections = new List<UserConnection>();
+            connections = _connections.Values
+                .Where(x=>x.Channel.Id == channel.Id && x.User.Id != 0)
+                .Distinct()
+                .ToList();
             return connections;
         }
     }

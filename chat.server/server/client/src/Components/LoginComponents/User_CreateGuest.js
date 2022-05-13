@@ -5,16 +5,12 @@ import { useState } from "react";
 const User_CreateGuest = ({ connection }) => {
   
   const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginType, setLoginType] = useState("Guest")
 
   const sendLoginAttempt = () => {
     const user = {
       Username: username,
-      Password: password,
-      LoginType: loginType
+      LoginType: "Guest"
     }
-    console.log("ReturnLoginAttempt:", user)
     connection.send("ReturnLoginAttempt", user)
   }
 

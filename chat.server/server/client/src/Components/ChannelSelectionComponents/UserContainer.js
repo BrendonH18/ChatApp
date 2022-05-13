@@ -1,9 +1,8 @@
 const UserContainer = ({ connectedUsers }) => {
   
   const helper = (param) => {
-    console.log(param)
     if (param === null) return ""
-    return param.value.user.username
+    return param.user.username
   }
 
   return(

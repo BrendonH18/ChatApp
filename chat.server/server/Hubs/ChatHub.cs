@@ -10,45 +10,44 @@ namespace server.Hubs
 {
     public class ChatHub : Hub
     {
-        private readonly IAppConnection _connectionsManagement;
-        private readonly string _botUser;
+        private readonly IAppConnection _connectionManagement;
         private readonly User _user;
         private readonly Channel _channel;
         private readonly LoginManagement _loginManagement;
         private readonly QueryManagement _queryManagement;
         private readonly ChannelManagement _channelManagement;
 
-        public ChatHub(IAppConnection connections, ISessionFactory factory)
+        public ChatHub(IAppConnection connectionManagement, ISessionFactory factory)
         {
             
-            _botUser = "ChatBot";
-            _connectionsManagement = connections; //ok
+            _connectionManagement = connectionManagement;
             _user = new User { Id = 0, IsPasswordValid = false, LoginType = "", Password = "", Username = "" };
             _channel = new Channel { Id = 0, Name = "" };
-            _queryManagement = new QueryManagement(factory); // ok
+            _queryManagement = new QueryManagement(factory);
             _loginManagement = new LoginManagement(_queryManagement);
             _channelManagement = new ChannelManagement();
         }
-        public void ReturnLoginAttempt(User user)
-        {
-            User loginResponse = _loginManagement.CreateLoginResponse(user);
-            _connectionsManagement.UpdateConnection(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
-            Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
-        }
-
-
 
         public void ReturnAvailableChannels()
         {
-            List<Channel> channels = _queryManagement.QueryDBforChannels();
+            List<Channel> channels = _queryManagement.ReturnAvailableChannels_List();
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
+        }
+
+        public void ReturnLoginAttempt(User user)
+        {
+            User loginResponse = _loginManagement.CreateLoginResponse(user);
+            if (user.LoginType == "Update" && user.IsPasswordValid == true)
+                loginResponse = _queryManagement.UpdatePasswordForUser(user);
+            _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }
 
         public async Task JoinChannel(Channel newChannel)
         {
-            UserConnection userConnection = _connectionsManagement.GetConnection(Context.ConnectionId);
+            UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
             await Clients.Client(Context.ConnectionId).SendAsync("ReturnedMessage", "Reset");
-            List<Message> messages = _queryManagement.RetrieveMessagesFromDB(newChannel);
+            List<Message> messages = _queryManagement.ReturnMessagesByChannel_List(newChannel);
             messages.ForEach(async m =>
             {
                 m.User.Password = "";
@@ -60,37 +59,38 @@ namespace server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, newChannel.Name);
             if (userConnection.User.Id != 0)
             {
-                await SendMessage($"{userConnection.User.Username} has entered {newChannel.Name}", newChannel, true);
-                await SendMessage($"{userConnection.User.Username} has left {userConnection.Channel.Name}", userConnection.Channel, true);
+                await SendMessageToChannel(new Message { isBot = true, Text = $"{userConnection.User.Username} has entered {newChannel.Name}", Channel = newChannel});
+                await SendMessageToChannel(new Message { isBot = true, Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel});
             }
-            _connectionsManagement.UpdateConnection(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
-            SendUsersInChannel(newChannel);
-            SendUsersInChannel(userConnection.Channel);
+            _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
+            SendConnectedUsersInChannel(newChannel);
+            SendConnectedUsersInChannel(userConnection.Channel);
         }
 
-        private void SendUsersInChannel(Channel channel)
+        private void SendConnectedUsersInChannel(Channel channel)
         {
-            var connectedUsers = _connectionsManagement.GetConnectionsOnChannel(channel);
+            var connectedUsers = _connectionManagement.GetUserConnectionsOnChannel_List(channel);
             Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
         }
 
 
-        public Task SendMessage(string messageText, Channel specificChannel = null, bool isBot = false)
+        public Task SendMessageToChannel(Message paramMessage)
         {
-            UserConnection userConnection = _connectionsManagement.GetConnection(Context.ConnectionId);
-            Message message = _channelManagement.FormatNewMessage(messageText, userConnection, specificChannel);
-            if (!isBot)
-                _queryManagement.CreateMessageInDB(message);
-            return Clients.Group(message.Channel.Name).SendAsync("ReturnedMessage", message);
+            UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+            Message loMessage = _channelManagement.FormatNewMessage(paramMessage, userConnection);
+            if (!loMessage.isBot)
+                _queryManagement.InsertMessage(loMessage);
+            return Clients.Group(loMessage.Channel.Name).SendAsync("ReturnedMessage", loMessage);
         }
 
-        public void UpdatePassword(string newPassword)
-        {
-            UserConnection userConnection = _connectionsManagement.GetConnection(Context.ConnectionId);
-            bool results_bool = _queryManagement.UpdatePasswordInDB(newPassword, userConnection);
+        //public User UpdateUserPassword(User paramUser)
+        //{
+        //    UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+        //    User loUser = _queryManagement.UpdatePasswordForUser(paramUser);
+        //    return loUser;
             //string results_string = results_bool ? "Update Successful" : "Update Unsuccessful";
             //Clients.Caller.SendAskync("ReturnedPasswordUpdate", results_string);
-        }
+        //}
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
