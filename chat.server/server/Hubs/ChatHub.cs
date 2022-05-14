@@ -39,6 +39,8 @@ namespace server.Hubs
             User loginResponse = _loginManagement.CreateLoginResponse(user);
             if (user.LoginType == "Update" && user.IsPasswordValid == true)
                 loginResponse = _queryManagement.UpdatePasswordForUser(user);
+            if (user.LoginType == "Logout")
+                loginResponse = _user;
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }

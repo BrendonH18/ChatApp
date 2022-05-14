@@ -10,6 +10,7 @@ import User_CreateGuest from './Components/LoginComponents/User_CreateGuest';
 import User_CreateNew from './Components/LoginComponents/User_CreateNew';
 import User_UpdatePassword from './Components/LoginComponents/User_UpdatePassword';
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
+import Home from './Components/Home';
 
 function App() {
 
@@ -51,6 +52,9 @@ function App() {
       console.log("Connection Started")
       connection.start()
       .then(result => {
+        setIsConnectionLoading(false)
+        console.log("Connection", isConnectionLoading)
+
         connection.on("ReturnedMessage", (param) => { 
           if (param === "Reset")
             return setMessages([])
@@ -71,8 +75,7 @@ function App() {
           })})
 
         connection.on("ReturnedAvailableChannels", (param) => {
-          setAvailableChannels( param )
-          setIsConnectionLoading(false)})
+          setAvailableChannels( param )})
 
         connection.on("ReturnedConnectedUsers", (param) => {
           setConnectedUsers(param)
@@ -95,6 +98,28 @@ function App() {
 
   return (
     <>
+    <header className='py-3 mb-3 border-bottom'>
+      <div className='container-fluid d-grid gap-3 align-items-center' style={{"grid-template-columns": "1fr 2fr;"}}>
+        <div className='dropdown'>
+          <a href="#" className="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-dark text-decoration-none dropdown-toggle" id="dropdownNavLink" data-bs-toggle="dropdown" aria-expanded="false">
+            {/* <svg className="bi me-2" width="40" height="32"><use href="#bootstrap"/></svg> */}
+          </a>
+          <ul className='dropdown-menu text-small shadow' aria-labelledby="dropdownNavLink">
+            <li><a className="dropdown-item active" href="#" aria-current="page">Overview</a></li>
+            <li><a className="dropdown-item" href="#">Inventory</a></li>
+            <li><a className="dropdown-item" href="#">Customers</a></li>
+            <li><a className="dropdown-item" href="#">Products</a></li>
+            <li><hr className="dropdown-divider"/></li>
+            <li><a className="dropdown-item" href="#">Reports</a></li>
+            <li><a className="dropdown-item" href="#">Analytics</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+    </header>
+
+
     <div className='app container-fluid vh-100 d-flex flex-column '>
       <Router>
         <nav>
@@ -104,7 +129,7 @@ function App() {
         </nav>
         <h2>{formatHeader()}</h2>
         <Routes>
-          <Route path="/" element={<h2>Welcome Page</h2>}/>
+          <Route path="/" element={<Home userConnection={userConnection} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
           <Route path="/Channel/" element={<ChannelDashboard setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
           </Route>

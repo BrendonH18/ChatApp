@@ -10,6 +10,9 @@ const handleClick = (e) => {
 }
     return(
       <>
+      
+
+
       {availableChannels.map(x => <button 
         id={x.id}
         onClick={handleClick}
