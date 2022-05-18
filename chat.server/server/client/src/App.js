@@ -48,44 +48,41 @@ function App() {
   },[])
 
   useEffect(() => {
-    if(connection){
-      console.log("Connection Started")
-      connection.start()
-      .then(result => {
-        setIsConnectionLoading(false)
-        console.log("Connection", isConnectionLoading)
-
-        connection.on("ReturnedMessage", (param) => { 
-          if (param === "Reset")
-            return setMessages([])
-          setMessages(x => [...x, param]) 
-        })
-
-        connection.on("ReturnedUser", (param) => {
-          setUserConnection({
-            ...userConnection,
-            user: param
-          })
-        })
-
-        connection.on("ReturnedChannel", (param) => {
-          setUserConnection({
-            ...userConnection,
-            channel: param
-          })})
-
-        connection.on("ReturnedAvailableChannels", (param) => {
-          setAvailableChannels( param )})
-
-        connection.on("ReturnedConnectedUsers", (param) => {
-          setConnectedUsers(param)
-        })
-        
-        connection.send("ReturnAvailableChannels")
+    if(connection === null) return console.error("Connection Error")
+    connection.start()
+    .then(result => {
+      connection.on("ReturnedMessage", (param) => { 
+        if (param === "Reset")
+          return setMessages([])
+        setMessages(x => [...x, param]) 
       })
-      .catch(e => console.log(e))
-    }
-  },[connection])
+
+      connection.on("ReturnedUser", (param) => {
+        setUserConnection({
+          ...userConnection,
+          user: param
+        })
+      })
+
+      connection.on("ReturnedChannel", (param) => {
+        setUserConnection({
+          ...userConnection,
+          channel: param
+        })})
+
+      connection.on("ReturnedAvailableChannels", (param) => {
+        setAvailableChannels( param )
+        setIsConnectionLoading(false)
+      })
+
+      connection.on("ReturnedConnectedUsers", (param) => {
+        setConnectedUsers(param)
+      })
+      
+      connection.send("ReturnAvailableChannels")
+    })
+    .catch(e => console.log(e))
+    },[connection])
 
   const formatHeader = () => {
     if(userConnection.user.id != 0 ) return `Welcome ${userConnection.user.username}`
@@ -98,50 +95,33 @@ function App() {
 
   return (
     <>
-    <header className='py-3 mb-3 border-bottom'>
-      <div className='container-fluid d-grid gap-3 align-items-center' style={{"grid-template-columns": "1fr 2fr;"}}>
-        <div className='dropdown'>
-          <a href="#" className="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-dark text-decoration-none dropdown-toggle" id="dropdownNavLink" data-bs-toggle="dropdown" aria-expanded="false">
-            {/* <svg className="bi me-2" width="40" height="32"><use href="#bootstrap"/></svg> */}
-          </a>
-          <ul className='dropdown-menu text-small shadow' aria-labelledby="dropdownNavLink">
-            <li><a className="dropdown-item active" href="#" aria-current="page">Overview</a></li>
-            <li><a className="dropdown-item" href="#">Inventory</a></li>
-            <li><a className="dropdown-item" href="#">Customers</a></li>
-            <li><a className="dropdown-item" href="#">Products</a></li>
-            <li><hr className="dropdown-divider"/></li>
-            <li><a className="dropdown-item" href="#">Reports</a></li>
-            <li><a className="dropdown-item" href="#">Analytics</a></li>
-          </ul>
-        </div>
-
+    <div className='container-fluid bg-dark text-white'>
+      <nav className='d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
+        <ul className='nav col-12 col-md-auto mb-2 justify-content-center mb-md-0'>
+          <li><a href="/" className="nav-link px-2 text-white">Home/Login</a></li>
+          <li><a className="nav-link px-2 text-white" href="/0">Channels</a></li>
+        </ul>
+        <div className="col-md-3 text-end">
+          {/* <button type="button" className="btn btn-outline-primary me-2">Login</button> */}
       </div>
-
-    </header>
-
-
-    <div className='app container-fluid vh-100 d-flex flex-column '>
+      </nav>
+    </div>
+    {/* <div className='app container-fluid vh-100 d-flex flex-column '> */}
       <Router>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/Login">User Login</Link>
-          <Link to="/Channel">Channel Select</Link>
-        </nav>
-        <h2>{formatHeader()}</h2>
         <Routes>
           <Route path="/" element={<Home userConnection={userConnection} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
-          <Route path="/Channel/" element={<ChannelDashboard setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}>
-            <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/>
-          </Route>
-          <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
+          <Route path="/:ActiveChannelID" element={<ChannelDashboard isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
+            {/* <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/> */}
+          
+          {/* <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
             <Route path="Returning" element={<User_CheckReturning connection={connection}/>}/>
             <Route path="Create" element={<User_CreateNew connection={connection}/>}/>
             <Route path="Guest" element={<User_CreateGuest connection={connection}/>}/>
             <Route path="Update" element={<User_UpdatePassword connection={connection}/>}/>
-          </Route>
+          </Route> */}
         </Routes>
       </Router>
-    </div>
+    {/* </div> */}
     </>
   );
 }
