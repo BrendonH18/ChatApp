@@ -175,7 +175,7 @@ const handleChannelSelect = (channel) => {
 									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
 								</div>
 								<div class="msg_container">
-									I am good too, thank you for your chat template
+									I am good too
 									<span class="msg_time">9:00 AM, Today</span>
 								</div>
 							</div>
@@ -193,7 +193,7 @@ const handleChannelSelect = (channel) => {
 									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
 								</div>
 								<div class="msg_container">
-									I am looking for your next templates
+									I am looking for your next thing
 									<span class="msg_time">9:07 AM, Today</span>
 								</div>
 							</div>
