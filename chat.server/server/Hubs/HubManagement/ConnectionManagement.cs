@@ -11,6 +11,8 @@ namespace server.Hubs.HubSupport
         void RemoveUserConnection_Void(string connectionID);
 
         List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel);
+
+        List<UserConnection> GetAllUserConnections_List();
     }
     public class ConnectionManagement : IAppConnection
     {
@@ -45,6 +47,12 @@ namespace server.Hubs.HubSupport
                 .Distinct()
                 .ToList();
             return connections;
+        }
+
+        public List<UserConnection> GetAllUserConnections_List()
+        {
+            List<UserConnection> userConnections = _connections.Values.ToList();
+            return userConnections;
         }
     }
 }

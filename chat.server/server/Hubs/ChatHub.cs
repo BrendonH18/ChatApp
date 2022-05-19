@@ -65,14 +65,17 @@ namespace server.Hubs
                 await SendMessageToChannel(new Message { isBot = true, Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel});
             }
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
+            await Clients.Caller.SendAsync("ReturnedChannel", newChannel); //NEW
             SendConnectedUsersInChannel(newChannel);
             SendConnectedUsersInChannel(userConnection.Channel);
         }
 
         private void SendConnectedUsersInChannel(Channel channel)
         {
-            var connectedUsers = _connectionManagement.GetUserConnectionsOnChannel_List(channel);
-            Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
+            //var connectedUsers = _connectionManagement.GetUserConnectionsOnChannel_List(channel);
+            //Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
+            List<UserConnection> connectedUsers = _connectionManagement.GetAllUserConnections_List();
+            Clients.All.SendAsync("ReturnedConnectedUsers", connectedUsers);
         }
 
 

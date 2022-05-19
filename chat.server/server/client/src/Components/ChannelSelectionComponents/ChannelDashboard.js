@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { act } from "@testing-library/react";
 
-const ChannelDashboard = ({ availableChannels, setUserConnection, userConnection, connection, setMessages, setConnectedUsers, isConnectionLoading}) => {
+const ChannelDashboard = ({ availableChannels, messages, connectedUsers, setUserConnection, userConnection, connection, setMessages, setConnectedUsers, isConnectionLoading}) => {
   
 const handleClick = (e) => {
   console.table(availableChannels)
@@ -15,6 +15,7 @@ let { ActiveChannelID } = useParams();
 // const [activeChannelName, setActiveChannelName] = useState("")
 
 let navigate = useNavigate()
+const [activeChannel, setActiveChannel] = useState({id: 1, name: "Loading"})
 
 
 useEffect(() => {
@@ -22,109 +23,97 @@ useEffect(() => {
   if(typeof ActiveChannelID === "undefined") return
   let id = parseInt(ActiveChannelID)
   if(id === 0) id = 1
-  let activeChannel = availableChannels[id - 1 ]
-  connection.send("JoinChannel", activeChannel)
+  connection.send("JoinChannel", availableChannels[ id - 1 ])
 }, [isConnectionLoading, ActiveChannelID])
 
 const handleChannelSelect = (channel) => {
   navigate(`/${channel.id}`)
 }
+
+const formatMessage = (message) => { 
+	if (parseInt(message.user.id) === parseInt(userConnection.user.id)) return formatMessageSend(message)
+	return formatMessageReceive(message)
+}
+
+const formatMessageSend = (message) => { return <>
+	<div class="d-flex justify-content-start mb-4">
+		<div class="img_cont_msg">
+			<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
+		</div>
+		<div class="msg_container">
+			{message.text}
+			<span class="msg_time">{message.created_on}</span>
+		</div>
+	</div>
+	</>
+}
+
+const formatMessageReceive = (message) => { return <>
+	<div class="d-flex justify-content-end mb-4">
+		<div class="msg_container_send">
+			{message.text}
+			<span class="msg_time_send">{message.created_on}</span>
+		</div>
+		<div class="img_cont_msg">
+			<img src="" class="rounded-circle user_img_msg"/>
+		</div>
+	</div>
+	</>
+}
+
+const groupBy = (objArray, property) => {
+	return objArray.reduce((acc, obj) => {
+		let key = obj[property]
+		if (!acc[property]) acc[key] = []
+		acc[key].push(obj)
+		return acc
+	}, {})
+}
+
+const countUsersPerChannel = () => {
+	let list = [5,5,5,2,2,2]
+	list = [{x: 5}, {x: 2}, {x: 5}]
+	let occurences = list.groupBy()
+	// reduce((acc, curr) => {
+	// 	return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
+	// }, {})
+	console.log(connectedUsers) 
+}
     return(
       <>
       <div class="container-fluid h-100">
 			<div class="row justify-content-center h-100">
-				<div class="col-md-4 col-xl-3 chat"><div class="card mb-sm-3 mb-md-0 contacts_card">
-					<div class="card-header">
-						<div class="input-group">
-							<input type="text" placeholder="Search..." name="" class="form-control search"/>
-							<div class="input-group-prepend">
-								<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+				<div class="col-md-3 col-xl-3 chat">
+					<div class="card mb-sm-3 mb-md-0 contacts_card">
+						<div class="card-header">
+							<div class="input-group">
+								<input type="text" placeholder="Search..." name="" class="form-control search"/>
+								<div class="input-group-prepend">
+									<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+								</div>
 							</div>
 						</div>
+						<div class="card-body contacts_body">
+							<ui class="contacts">
+								{availableChannels.map(channel => 
+								<li class={parseInt(ActiveChannelID)===parseInt(channel.id) ? "active" : ""} onClick={e => handleChannelSelect(channel)}>
+									<div class="d-flex bd-highlight" >
+										<div class="img_cont" >
+										<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img" />
+															<span class="online_icon offline" ></span>
+										</div>
+										<div class="user_info" >
+										<span >{channel.name}</span>
+										<p >Click Me!</p>
+										</div>
+									</div>
+								</li>)}
+							</ui>
+						</div>
+						<div class="card-footer"></div>
 					</div>
-					<div class="card-body contacts_body">
-						<ui class="contacts">
-              {availableChannels.map(channel => 
-                <li class="active" 
-                onClick={e => handleChannelSelect(channel)}
-                >
-                  <div class="d-flex bd-highlight" >
-                    <div class="img_cont" >
-                      <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img" />
-									    <span class="online_icon offline" ></span>
-                    </div>
-                    <div class="user_info" >
-                      <span >{channel.name}</span>
-                      <p >Click Me!</p>
-                    </div>
-                  </div>
-                </li>
-              )}
-						{/* <li class="active">
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon"></span>
-								</div>
-								<div class="user_info">
-									<span>Khalid</span>
-									<p>Kalid is online</p>
-								</div>
-							</div>
-						</li> */}
-						{/* <li>
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="https://2.bp.blogspot.com/-8ytYF7cfPkQ/WkPe1-rtrcI/AAAAAAAAGqU/FGfTDVgkcIwmOTtjLka51vineFBExJuSACLcBGAs/s320/31.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon offline"></span>
-								</div>
-								<div class="user_info">
-									<span>Taherah Big</span>
-									<p>Taherah left 7 mins ago</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="https://i.pinimg.com/originals/ac/b9/90/acb990190ca1ddbb9b20db303375bb58.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon"></span>
-								</div>
-								<div class="user_info">
-									<span>Sami Rafi</span>
-									<p>Sami is online</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="http://profilepicturesdp.com/wp-content/uploads/2018/07/sweet-girl-profile-pictures-9.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon offline"></span>
-								</div>
-								<div class="user_info">
-									<span>Nargis Hawa</span>
-									<p>Nargis left 30 mins ago</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="d-flex bd-highlight">
-								<div class="img_cont">
-									<img src="https://static.turbosquid.com/Preview/001214/650/2V/boy-cartoon-3D-model_D.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon offline"></span>
-								</div>
-								<div class="user_info">
-									<span>Rashid Samim</span>
-									<p>Rashid left 50 mins ago</p>
-								</div>
-							</div>
-						</li> */}
-						</ui>
-					</div>
-					<div class="card-footer"></div>
-				</div></div>
-				<div class="col-md-8 col-xl-6 chat">
+				</div>
+				<div class="col-md-2 col-xl-2 chat">
 					<div class="card">
 						<div class="card-header msg_head">
 							<div class="d-flex bd-highlight">
@@ -133,7 +122,25 @@ const handleChannelSelect = (channel) => {
 									<span class="online_icon"></span>
 								</div>
 								<div class="user_info">
-									<span>Chat with Khalid</span>
+									<span>Users</span>
+									<p>3</p>
+									<div>{countUsersPerChannel()}</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+				<div class="col-md-6 col-xl-6 chat">
+					<div class="card">
+						<div class="card-header msg_head">
+							<div class="d-flex bd-highlight">
+								<div class="img_cont">
+									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img"/>
+									<span class="online_icon"></span>
+								</div>
+								<div class="user_info">
+									<span>{`Let's Chat: ${activeChannel.name}`}</span>
 									<p>1767 Messages</p>
 								</div>
 								<div class="video_cam">
@@ -185,7 +192,7 @@ const handleChannelSelect = (channel) => {
 									<span class="msg_time_send">9:05 AM, Today</span>
 								</div>
 								<div class="img_cont_msg">
-							<img src="" class="rounded-circle user_img_msg"/>
+									<img src="" class="rounded-circle user_img_msg"/>
 								</div>
 							</div>
 							<div class="d-flex justify-content-start mb-4">
@@ -215,6 +222,7 @@ const handleChannelSelect = (channel) => {
 									<span class="msg_time">9:12 AM, Today</span>
 								</div>
 							</div>
+							{messages.map(message => { return formatMessage(message)})}
 						</div>
 						<div class="card-footer">
 							<div class="input-group">

@@ -110,7 +110,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home userConnection={userConnection} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
-          <Route path="/:ActiveChannelID" element={<ChannelDashboard isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
+          <Route path="/:ActiveChannelID" element={<ChannelDashboard connectedUsers={connectedUsers} messages={messages} isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
             {/* <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/> */}
           
           {/* <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
