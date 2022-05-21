@@ -5,7 +5,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 
 
 
-const Home = ({ connection, isConnectionLoading, userConnection }) => {
+const Home = ({ user, channel, connection, isConnectionLoading, userConnection }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -28,7 +28,7 @@ const Home = ({ connection, isConnectionLoading, userConnection }) => {
   }
   
   const isVisible = () => {
-    if(userConnection && userConnection.user.isPasswordValid) return <>
+    if(user && user.isPasswordValid) return <>
     <hr className="my-4"/>
       <div className='col-md-10 mx-auto col-lg-5'>
         <div className=''>

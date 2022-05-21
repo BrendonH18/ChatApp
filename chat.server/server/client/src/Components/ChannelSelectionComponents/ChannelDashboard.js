@@ -1,22 +1,17 @@
-import { HubConnection } from "@microsoft/signalr";
-import { Outlet, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { act } from "@testing-library/react";
 
-const ChannelDashboard = ({ availableChannels, messages, connectedUsers, setUserConnection, userConnection, connection, setMessages, setConnectedUsers, isConnectionLoading}) => {
-  
-const handleClick = (e) => {
-  console.table(availableChannels)
-  console.log(e.target.id)
-  navigate(availableChannels[e.target.id - 1].id.toString())
-}
+const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, setUserConnection, userConnection, connection, setMessages, setConnectedUsers, isConnectionLoading}) => {
+const blankData = {1:{Active:[], Observe:[]},2:{Active:[], Observe:[]},3:{Active:[], Observe:[]}}
 
 let { ActiveChannelID } = useParams();
-// const [activeChannelName, setActiveChannelName] = useState("")
+const [connectedUsersByChannelAndStatus, setConnectedUsersByChannelAndStatus] = useState(blankData)
 
 let navigate = useNavigate()
-const [activeChannel, setActiveChannel] = useState({id: 1, name: "Loading"})
 
+const handleChannelSelect = (channel) => {
+  navigate(`/Channel/${channel.id}`)
+}
 
 useEffect(() => {
   if(isConnectionLoading) return
@@ -26,12 +21,9 @@ useEffect(() => {
   connection.send("JoinChannel", availableChannels[ id - 1 ])
 }, [isConnectionLoading, ActiveChannelID])
 
-const handleChannelSelect = (channel) => {
-  navigate(`/${channel.id}`)
-}
 
-const formatMessage = (message) => { 
-	if (parseInt(message.user.id) === parseInt(userConnection.user.id)) return formatMessageSend(message)
+const formatMessage = (message) => {
+	if (parseInt(message.user.id) === parseInt(user.id)) return formatMessageSend(message)
 	return formatMessageReceive(message)
 }
 
@@ -61,58 +53,35 @@ const formatMessageReceive = (message) => { return <>
 	</>
 }
 
-const groupBy1 = (objArray, property1,property2) => {
+useEffect(() => {
+	const formattedUsers = groupByChannelId(connectedUsers)
+	setConnectedUsersByChannelAndStatus(formattedUsers)
+}, [connectedUsers])
+
+const groupByChannelId = (objArray) => {
 	let newArray = {}
 	objArray.forEach(obj => {
-		// console.log("1 - Object: ", obj)
-		let key = obj[property1][property2]
-		// console.log("2 - Key: ", key)
-		// console.log("3 - Exists: ", !newArray[key])
+		let key = obj["channel"]["id"]
 		if(!newArray[key]){
-			newArray[key] = []
+			newArray[key] = {}
+			newArray[key].Active = []
+			newArray[key].Observe = []
 		}
-		// console.log("4 - State: ", newArray)
-		newArray[key].push(obj)
-		// console.log("5 - Final: ", newArray)
+		if (obj.user.isPasswordValid) newArray[key].Active.push(obj)
+		newArray[key].Observe.push(obj)
 	});
-	console.log("NEW: ", newArray)
+	for (let i = 0; i < availableChannels.length; i++) {
+		const channel = availableChannels[i];
+		console.log("Channel: ", channel)
+		if(!newArray[channel.id]){
+			newArray[channel.id] = {}
+			newArray[channel.id].Active = []
+			newArray[channel.id].Observe = []
+		}
+	}
 	return newArray
 }
 
-
-	
-
-
-
-const countUsersPerChannel = () => {
-	// let list = [
-	// 	{channel: {id: 1, name: "Sports"}, user: {isPasswordValid: true, username: "Brendon"}, connectionId: "abc"}, 
-	// 	{channel: {id: 7, name: "Sports"}, user: {isPasswordValid: false, username: "Claudia"}, connectionId:"xyz"}, 
-	// 	{channel: {id: 2, name: "Fashion"}, user: {isPasswordValid: true, username: "Dave"}, connectionId:"azy"}],
-	let list = connectedUsers
-
-	let occurences = groupBy1(list, "channel", "id")
-	let keys = Object.keys(occurences)
-	console.log(keys)
-	let newList = []
-	for (let i = 0; i < keys.length; i++) {
-		// debugger
-		const element = occurences[keys[i]];
-		// console.log("Key: ", keys[i])
-		// console.log("Before: ", newList)
-		newList[keys[i]] = []
-		// console.log("Middle: ", newList)
-		// console.log("Element:", element)
-		newList[keys[i]] = groupBy1(element, "user", "isPasswordValid")
-		// console.log("End: ", newList)
-	}
-	console.log("New List: ", newList)
-	// groupBy1(occurences,"y")
-	// reduce((acc, curr) => {
-	// 	return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
-	// }, {})
-	// console.log(occurences) 
-}
     return(
       <>
       <div class="container-fluid h-100">
@@ -129,16 +98,16 @@ const countUsersPerChannel = () => {
 						</div>
 						<div class="card-body contacts_body">
 							<ui class="contacts">
-								{availableChannels.map(channel => 
+								{availableChannels.map(channel =>
 								<li class={parseInt(ActiveChannelID)===parseInt(channel.id) ? "active" : ""} onClick={e => handleChannelSelect(channel)}>
 									<div class="d-flex bd-highlight" >
 										<div class="img_cont" >
-										<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img" />
-															<span class="online_icon offline" ></span>
+											<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img" />
+											{/* <span class={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"} ></span> */}
 										</div>
 										<div class="user_info" >
 										<span >{channel.name}</span>
-										<p >Click Me!</p>
+										{/* <p>{`${connectedUsersByChannelAndStatus[channel.id]["Active"].length} Connected`}</p> */}
 										</div>
 									</div>
 								</li>)}
@@ -157,10 +126,22 @@ const countUsersPerChannel = () => {
 								</div>
 								<div class="user_info">
 									<span>Users</span>
-									<p>3</p>
-									<div>{countUsersPerChannel()}</div>
+									{/* <p>{`${connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].length} Connected`}</p> */}
 								</div>
 							</div>
+						</div>
+						<div class="card-body contacts_body">
+							<ui class="contacts">
+								{/* {connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].map(userConnection =>
+								<li>
+									<div class="d-flex bd-highlight" >
+										<div class="user_info" >
+											<span >{userConnection.user.username}</span>
+										</div>
+									</div>
+								</li>
+								)} */}
+							</ui>
 						</div>
 					</div>
 
@@ -174,8 +155,8 @@ const countUsersPerChannel = () => {
 									<span class="online_icon"></span>
 								</div>
 								<div class="user_info">
-									<span>{`Let's Chat: ${activeChannel.name}`}</span>
-									<p>1767 Messages</p>
+									<span>{`Let's Chat: ${channel.name}`}</span>
+									<p>{`${messages.length} Message(s)`}</p>
 								</div>
 								<div class="video_cam">
 									<span><i class="fas fa-video"></i></span>
@@ -193,79 +174,16 @@ const countUsersPerChannel = () => {
 							</div>
 						</div>
 						<div class="card-body msg_card_body">
-							<div class="d-flex justify-content-start mb-4">
-								<div class="img_cont_msg">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
-								</div>
-								<div class="msg_container">
-									Hi, how are you samim?
-									<span class="msg_time">8:40 AM, Today</span>
-								</div>
-							</div>
-							<div class="d-flex justify-content-end mb-4">
-								<div class="msg_container_send">
-									Hi Khalid i am good tnx how about you?
-									<span class="msg_time_send">8:55 AM, Today</span>
-								</div>
-								<div class="img_cont_msg">
-							<img src="" class="rounded-circle user_img_msg"/>
-								</div>
-							</div>
-							<div class="d-flex justify-content-start mb-4">
-								<div class="img_cont_msg">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
-								</div>
-								<div class="msg_container">
-									I am good too
-									<span class="msg_time">9:00 AM, Today</span>
-								</div>
-							</div>
-							<div class="d-flex justify-content-end mb-4">
-								<div class="msg_container_send">
-									You are welcome
-									<span class="msg_time_send">9:05 AM, Today</span>
-								</div>
-								<div class="img_cont_msg">
-									<img src="" class="rounded-circle user_img_msg"/>
-								</div>
-							</div>
-							<div class="d-flex justify-content-start mb-4">
-								<div class="img_cont_msg">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
-								</div>
-								<div class="msg_container">
-									I am looking for your next thing
-									<span class="msg_time">9:07 AM, Today</span>
-								</div>
-							</div>
-							<div class="d-flex justify-content-end mb-4">
-								<div class="msg_container_send">
-									Ok, thank you have a good day
-									<span class="msg_time_send">9:10 AM, Today</span>
-								</div>
-								<div class="img_cont_msg">
-						<img src="" class="rounded-circle user_img_msg"/>
-								</div>
-							</div>
-							<div class="d-flex justify-content-start mb-4">
-								<div class="img_cont_msg">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg"/>
-								</div>
-								<div class="msg_container">
-									Bye, see you
-									<span class="msg_time">9:12 AM, Today</span>
-								</div>
-							</div>
 							{messages.map(message => { return formatMessage(message)})}
 						</div>
 						<div class="card-footer">
 							<div class="input-group">
-								<div class="input-group-append">
+								{/* <div class="input-group-append">
 									<span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
-								</div>
+								</div> */}
 								<textarea name="" class="form-control type_msg" placeholder="Type your message..."></textarea>
 								<div class="input-group-append">
-									<span class="input-group-text send_btn"><i class="fas fa-location-arrow"></i></span>
+									<span class="input-group-text send_btn"><i class="fa-solid fa-user"></i></span>
 								</div>
 							</div>
 						</div>
@@ -273,18 +191,8 @@ const countUsersPerChannel = () => {
 				</div>
 			</div>
 		</div>
-
-
-      {/* <header className="py-2 mb-4 border-bottom">
-        <div className="container">
-          <ul className='nav col-12 col-md-auto mb-2 d-flex justify-content-around mb-md-0'>
-            {availableChannels.map(x=><button id={x.id} className="px-2 btn btn-primary" onClick={handleClick}>{x.name}</button>)}
-          </ul>
-        </div>
-      </header> */}
-      {/* <Outlet/> */}
       </>
     )
   }
-  
+
   export default ChannelDashboard;

@@ -9,7 +9,7 @@ import User_CheckReturning from './Components/LoginComponents/User_CheckReturnin
 import User_CreateGuest from './Components/LoginComponents/User_CreateGuest';
 import User_CreateNew from './Components/LoginComponents/User_CreateNew';
 import User_UpdatePassword from './Components/LoginComponents/User_UpdatePassword';
-import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useNavigate, Link} from 'react-router-dom'
 import Home from './Components/Home';
 
 function App() {
@@ -38,6 +38,9 @@ function App() {
   const [userConnection, setUserConnection] = useState(blankUserConnection)
   const [availableChannels, setAvailableChannels] = useState([])
   const [connectedUsers, setConnectedUsers] = useState([])
+  const [user, setUser] = useState(blankUser)
+  const [channel, setChannel] = useState(blankChannel)
+
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
@@ -56,19 +59,22 @@ function App() {
           return setMessages([])
         setMessages(x => [...x, param]) 
       })
-
+      
       connection.on("ReturnedUser", (param) => {
         setUserConnection({
           ...userConnection,
           user: param
         })
+        setUser(param)
       })
 
       connection.on("ReturnedChannel", (param) => {
         setUserConnection({
           ...userConnection,
           channel: param
-        })})
+        })
+        setChannel(param)
+      })
 
       connection.on("ReturnedAvailableChannels", (param) => {
         setAvailableChannels( param )
@@ -96,24 +102,27 @@ function App() {
   useEffect(() =>{
     console.log("Users: ", connectedUsers)
   },[connectedUsers])
+
+  
+
   return (
     <>
-    <div className='container-fluid bg-dark text-white'>
-      <nav className='d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
-        <ul className='nav col-12 col-md-auto mb-2 justify-content-center mb-md-0'>
-          <li><a href="/" className="nav-link px-2 text-white">Home/Login</a></li>
-          <li><a className="nav-link px-2 text-white" href="/0">Channels</a></li>
-        </ul>
-        <div className="col-md-3 text-end">
-          {/* <button type="button" className="btn btn-outline-primary me-2">Login</button> */}
-      </div>
-      </nav>
-    </div>
     {/* <div className='app container-fluid vh-100 d-flex flex-column '> */}
       <Router>
+        <div className='container-fluid bg-dark text-white'>
+          <nav className='d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
+            <ul className='nav col-12 col-md-auto mb-2 justify-content-center mb-md-0'>
+              <Link to="/" className="nav-link px-2 text-white">Home/Login</Link>
+              <Link to="/Channel/1" className="nav-link px-2 text-white">Channels</Link>              
+            </ul>
+            <div className="col-md-3 text-end">
+              {/* <button type="button" className="btn btn-outline-primary me-2">Login</button> */}
+          </div>
+          </nav>
+        </div>
         <Routes>
-          <Route path="/" element={<Home userConnection={userConnection} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
-          <Route path="/:ActiveChannelID" element={<ChannelDashboard connectedUsers={connectedUsers} messages={messages} isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
+          <Route path="/" element={<Home userConnection={userConnection} user={user} channel={channel} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
+          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} connectedUsers={connectedUsers} messages={messages} isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
             {/* <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/> */}
           
           {/* <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
