@@ -90,9 +90,12 @@ function App() {
   }
 
   useEffect(() =>{
-    formatHeader()
+    console.log("UserConnection: ", userConnection)
   },[userConnection])
 
+  useEffect(() =>{
+    console.log("Users: ", connectedUsers)
+  },[connectedUsers])
   return (
     <>
     <div className='container-fluid bg-dark text-white'>

@@ -61,23 +61,57 @@ const formatMessageReceive = (message) => { return <>
 	</>
 }
 
-const groupBy = (objArray, property) => {
-	return objArray.reduce((acc, obj) => {
-		let key = obj[property]
-		if (!acc[property]) acc[key] = []
-		acc[key].push(obj)
-		return acc
-	}, {})
+const groupBy1 = (objArray, property1,property2) => {
+	let newArray = {}
+	objArray.forEach(obj => {
+		// console.log("1 - Object: ", obj)
+		let key = obj[property1][property2]
+		// console.log("2 - Key: ", key)
+		// console.log("3 - Exists: ", !newArray[key])
+		if(!newArray[key]){
+			newArray[key] = []
+		}
+		// console.log("4 - State: ", newArray)
+		newArray[key].push(obj)
+		// console.log("5 - Final: ", newArray)
+	});
+	console.log("NEW: ", newArray)
+	return newArray
 }
 
+
+	
+
+
+
 const countUsersPerChannel = () => {
-	let list = [5,5,5,2,2,2]
-	list = [{x: 5}, {x: 2}, {x: 5}]
-	let occurences = list.groupBy()
+	// let list = [
+	// 	{channel: {id: 1, name: "Sports"}, user: {isPasswordValid: true, username: "Brendon"}, connectionId: "abc"}, 
+	// 	{channel: {id: 7, name: "Sports"}, user: {isPasswordValid: false, username: "Claudia"}, connectionId:"xyz"}, 
+	// 	{channel: {id: 2, name: "Fashion"}, user: {isPasswordValid: true, username: "Dave"}, connectionId:"azy"}],
+	let list = connectedUsers
+
+	let occurences = groupBy1(list, "channel", "id")
+	let keys = Object.keys(occurences)
+	console.log(keys)
+	let newList = []
+	for (let i = 0; i < keys.length; i++) {
+		// debugger
+		const element = occurences[keys[i]];
+		// console.log("Key: ", keys[i])
+		// console.log("Before: ", newList)
+		newList[keys[i]] = []
+		// console.log("Middle: ", newList)
+		// console.log("Element:", element)
+		newList[keys[i]] = groupBy1(element, "user", "isPasswordValid")
+		// console.log("End: ", newList)
+	}
+	console.log("New List: ", newList)
+	// groupBy1(occurences,"y")
 	// reduce((acc, curr) => {
 	// 	return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
 	// }, {})
-	console.log(connectedUsers) 
+	// console.log(occurences) 
 }
     return(
       <>
