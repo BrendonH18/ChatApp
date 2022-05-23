@@ -27,10 +27,6 @@ namespace server
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 
-
-        
-        //Figure out how to add services.addhibernate(cfg); 
-
         
         public void ConfigureServices(IServiceCollection services)
         {
@@ -45,7 +41,6 @@ namespace server
                         .AllowCredentials();
                 });
             });
-            //services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
             services.AddSingleton<IAppConnection, ConnectionManagement>(options => new ConnectionManagement());
 
             //NHibernate Automated
@@ -73,10 +68,10 @@ namespace server
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //if (env.IsDevelopment())
-            //{
-            app.UseDeveloperExceptionPage();
-            //}
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
 
             app.UseRouting();
 
@@ -87,17 +82,16 @@ namespace server
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
-                //endpoints.MapControllers(); // new jwt
             });
 
-            //app.UseSpa(spa =>
-            //{
-            //    spa.Options.SourcePath = "client";
-            //    if (env.IsDevelopment())
-            //    {
-            //        spa.UseReactDevelopmentServer(npmScript: "start");
-            //    }
-            //});
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "client";
+                if (env.IsDevelopment())
+                {
+                    spa.UseReactDevelopmentServer(npmScript: "start");
+                }
+            });
         }
     }
 }

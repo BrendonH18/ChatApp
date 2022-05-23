@@ -2,14 +2,8 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { HubConnectionBuilder } from '@microsoft/signalr'
 import { useEffect, useState } from 'react';
-import Landing from './Components/LoginComponents/LoginDashboard';
-import ChannelDashboard from './Components/ChannelSelectionComponents/ChannelDashboard';
-import ActiveChannel from './Components/ChannelSelectionComponents/ActiveChannel';
-import User_CheckReturning from './Components/LoginComponents/User_CheckReturning'
-import User_CreateGuest from './Components/LoginComponents/User_CreateGuest';
-import User_CreateNew from './Components/LoginComponents/User_CreateNew';
-import User_UpdatePassword from './Components/LoginComponents/User_UpdatePassword';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Link} from 'react-router-dom'
+import ChannelDashboard from './Components/ChannelDashboard';
+import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
 
 function App() {
@@ -27,83 +21,38 @@ function App() {
     name: ""
   }
 
-  const blankUserConnection = {
-    user: blankUser,
-    channel: blankChannel
-  }
-
-  const [connection, setConnection] = useState(null)
-  const [isConnectionLoading, setIsConnectionLoading] = useState(true)
-  const [messages, setMessages] = useState([])
-  const [userConnection, setUserConnection] = useState(blankUserConnection)
-  const [availableChannels, setAvailableChannels] = useState([])
-  const [connectedUsers, setConnectedUsers] = useState(null)
-  const [user, setUser] = useState(blankUser)
+  const [availableChannels, setAvailableChannels] = useState(null)
   const [channel, setChannel] = useState(blankChannel)
+  const [connectedUsers, setConnectedUsers] = useState(null)
+  const [connection, setConnection] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [user, setUser] = useState(blankUser)
 
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('https://localhost:44314/chat')
+    .withUrl('/chat')
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
   },[])
 
   useEffect(() => {
-    if(connection === null) return console.error("Connection Error")
+    if(connection === null) return
     connection.start()
     .then(result => {
       connection.on("ReturnedMessage", (param) => { 
-        if (param === "Reset")
-          return setMessages([])
-        setMessages(x => [...x, param]) 
+        if (param === "Reset") return setMessages([])
+        setMessages(m => [...m, param]) 
       })
-      
-      connection.on("ReturnedUser", (param) => {
-        setUserConnection({
-          ...userConnection,
-          user: param
-        })
-        setUser(param)
-      })
-
-      connection.on("ReturnedChannel", (param) => {
-        setUserConnection({
-          ...userConnection,
-          channel: param
-        })
-        setChannel(param)
-      })
-
-      connection.on("ReturnedAvailableChannels", (param) => {
-        setAvailableChannels( param )
-        setIsConnectionLoading(false)
-      })
-
-      connection.on("ReturnedConnectedUsers", (param) => {
-        setConnectedUsers(param)
-      })
-      
+      connection.on("ReturnedUser", (param) => setUser(param))
+      connection.on("ReturnedChannel", (param) => setChannel(param))
+      connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
+      connection.on("ReturnedConnectedUsers", (param) => setConnectedUsers(param))
       connection.send("ConnectionSetup")
     })
     .catch(e => console.log(e))
     },[connection])
-
-  const formatHeader = () => {
-    if(userConnection.user.id != 0 ) return `Welcome ${userConnection.user.username}`
-    return "Welcome Guest Viewer"
-  }
-
-  useEffect(() =>{
-    console.log("UserConnection: ", userConnection)
-  },[userConnection])
-
-  useEffect(() =>{
-    console.log("Users: ", connectedUsers)
-  },[connectedUsers])
-
-  
 
   return (
     <>
@@ -120,8 +69,8 @@ function App() {
           </nav>
         </div>
         <Routes>
-          <Route path="/" element={<Home user={user} connection={connection} isConnectionLoading={isConnectionLoading}/>}/>
-          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} isConnectionLoading={isConnectionLoading} />}/>
+          <Route path="/" element={<Home user={user} connection={connection} />}/>
+          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>
     </>

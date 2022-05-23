@@ -3,7 +3,7 @@ import {  useState } from 'react';
 
 
 
-const Home = ({ user, connection, isConnectionLoading }) => {
+const Home = ({ user, connection }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -11,17 +11,13 @@ const Home = ({ user, connection, isConnectionLoading }) => {
 
   const handleClick = (e, type) => {
     e.preventDefault()
-    console.log(isConnectionLoading)
-    if(isConnectionLoading) return console.log("Not Connected")
+    if(!connection) return console.log("Not Connected")
     const user = {
       username: username,
       password: password,
       newPassword: newPassword,
       loginType: type
     }
-    console.log(isConnectionLoading)
-    console.log(user)
-    console.log(connection)
     connection.send("ReturnLoginAttempt", user)
   }
   
@@ -37,11 +33,11 @@ const Home = ({ user, connection, isConnectionLoading }) => {
           <form className='p-4 p-md-5 border rounded-3 bg-light'>
             <div className='form-floating mb-3'>
               <input type='text' className='form-control' id='floatingInput' placeholder='Username' onChange={e => setUsername(e.target.value)}/>
-              <label for="floatingInput">Username</label>
+              <label htmlFor="floatingInput">Username</label>
             </div>
             <div className="form-floating mb-3">
               <input type='password' className="form-control" id="floatingPassword" placeholder="Password" onChange={e => setPassword(e.target.value)}/>
-              <label for="floatingPassword">Password</label>
+              <label htmlFor="floatingPassword">Password</label>
             </div>
             <div className='row'>
               <div className='column text-center d-flex justify-content-around'>
