@@ -1,26 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faPaperPlane, faSearch } from "@fortawesome/free-solid-svg-icons"
 
-const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, setUserConnection, userConnection, connection, setMessages, setConnectedUsers, isConnectionLoading}) => {
-const blankData = {1:{Active:[], Observe:[]},2:{Active:[], Observe:[]},3:{Active:[], Observe:[]}}
 
-let { ActiveChannelID } = useParams();
-const [connectedUsersByChannelAndStatus, setConnectedUsersByChannelAndStatus] = useState(blankData)
+const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, connection, isConnectionLoading}) => {
 
+const [connectedUsersByChannelAndStatus, setConnectedUsersByChannelAndStatus] = useState(null)
+const [messageText, setMessageText] = useState('')
 let navigate = useNavigate()
-
-const handleChannelSelect = (channel) => {
-  navigate(`/Channel/${channel.id}`)
-}
-
-useEffect(() => {
-  if(isConnectionLoading) return
-  if(typeof ActiveChannelID === "undefined") return
-  let id = parseInt(ActiveChannelID)
-  if(id === 0) id = 1
-  connection.send("JoinChannel", availableChannels[ id - 1 ])
-}, [isConnectionLoading, ActiveChannelID])
-
+let { ActiveChannelID } = useParams();
+const messagesEndRef = useRef(null)
 
 const formatMessage = (message) => {
 	if (parseInt(message.user.id) === parseInt(user.id)) return formatMessageSend(message)
@@ -53,12 +43,8 @@ const formatMessageReceive = (message) => { return <>
 	</>
 }
 
-useEffect(() => {
-	const formattedUsers = groupByChannelId(connectedUsers)
-	setConnectedUsersByChannelAndStatus(formattedUsers)
-}, [connectedUsers])
-
 const groupByChannelId = (objArray) => {
+	if(!objArray) return
 	let newArray = {}
 	objArray.forEach(obj => {
 		let key = obj["channel"]["id"]
@@ -82,6 +68,43 @@ const groupByChannelId = (objArray) => {
 	return newArray
 }
 
+const handleChannelSelect = (channel) => {
+	navigate(`/Channel/${channel.id}`)
+}
+const handleMessageInput = (e) => {
+	setMessageText(e.target.value)
+}
+const handleSendMessage = (e) =>{
+	e.preventDefault()
+	if (!user.isPasswordValid) return setMessageText("Message blocked - Please login to send messages")
+    const message = {
+      text: messageText,
+      isBot: false
+    }
+	setMessageText('')
+	console.log("Message: ", message)
+    connection.send("SendMessageToChannel", message);
+  }
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({behavior: "smooth"})
+  
+  useEffect(scrollToBottom, [messages])
+
+  useEffect(() => {
+	  const formattedUsers = groupByChannelId(connectedUsers)
+	  setConnectedUsersByChannelAndStatus(formattedUsers)
+  }, [connectedUsers])
+	
+  useEffect(() => {
+	if(isConnectionLoading) return
+	if(typeof ActiveChannelID === "undefined") return
+	let id = parseInt(ActiveChannelID)
+	if(id === 0) id = 1
+	connection.send("JoinChannel", availableChannels[ id - 1 ])
+  }, [isConnectionLoading, ActiveChannelID])
+
+
+
     return(
       <>
       <div class="container-fluid h-100">
@@ -92,7 +115,9 @@ const groupByChannelId = (objArray) => {
 							<div class="input-group">
 								<input type="text" placeholder="Search..." name="" class="form-control search"/>
 								<div class="input-group-prepend">
-									<span class="input-group-text search_btn"><i class="fas fa-search"></i></span>
+									<span class="input-group-text search_btn h-100">
+										<FontAwesomeIcon icon={faSearch}/>
+									</span>
 								</div>
 							</div>
 						</div>
@@ -103,11 +128,15 @@ const groupByChannelId = (objArray) => {
 									<div class="d-flex bd-highlight" >
 										<div class="img_cont" >
 											<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img" />
-											{/* <span class={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"} ></span> */}
+											{connectedUsersByChannelAndStatus
+												? <span class={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"} ></span>
+												: <></>}
 										</div>
 										<div class="user_info" >
-										<span >{channel.name}</span>
-										{/* <p>{`${connectedUsersByChannelAndStatus[channel.id]["Active"].length} Connected`}</p> */}
+											<span >{channel.name}</span>
+											{connectedUsersByChannelAndStatus
+												? <p>{`${connectedUsersByChannelAndStatus[channel.id]["Active"].length} Connected`}</p>
+												: <></>}
 										</div>
 									</div>
 								</li>)}
@@ -122,17 +151,22 @@ const groupByChannelId = (objArray) => {
 							<div class="d-flex bd-highlight">
 								<div class="img_cont">
 									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img"/>
-									<span class="online_icon"></span>
+									{connectedUsersByChannelAndStatus
+										? <span class={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"}></span>
+										: <></>}
 								</div>
 								<div class="user_info">
 									<span>Users</span>
-									{/* <p>{`${connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].length} Connected`}</p> */}
+									{connectedUsersByChannelAndStatus
+										? <p>{`${connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].length} Connected`}</p>
+										: <></>}
 								</div>
 							</div>
 						</div>
 						<div class="card-body contacts_body">
 							<ui class="contacts">
-								{/* {connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].map(userConnection =>
+								{connectedUsersByChannelAndStatus
+									? connectedUsersByChannelAndStatus[ActiveChannelID]["Active"].map(userConnection =>
 								<li>
 									<div class="d-flex bd-highlight" >
 										<div class="user_info" >
@@ -140,7 +174,8 @@ const groupByChannelId = (objArray) => {
 										</div>
 									</div>
 								</li>
-								)} */}
+								)
+									: <></>}
 							</ui>
 						</div>
 					</div>
@@ -158,32 +193,27 @@ const groupByChannelId = (objArray) => {
 									<span>{`Let's Chat: ${channel.name}`}</span>
 									<p>{`${messages.length} Message(s)`}</p>
 								</div>
-								<div class="video_cam">
-									<span><i class="fas fa-video"></i></span>
-									<span><i class="fas fa-phone"></i></span>
-								</div>
-							</div>
-							<span id="action_menu_btn"><i class="fas fa-ellipsis-v"></i></span>
-							<div class="action_menu">
-								<ul>
-									<li><i class="fas fa-user-circle"></i> View profile</li>
-									<li><i class="fas fa-users"></i> Add to close friends</li>
-									<li><i class="fas fa-plus"></i> Add to group</li>
-									<li><i class="fas fa-ban"></i> Block</li>
-								</ul>
 							</div>
 						</div>
 						<div class="card-body msg_card_body">
 							{messages.map(message => { return formatMessage(message)})}
-						</div>
+							<div ref={messagesEndRef}/>
+						</div >
 						<div class="card-footer">
 							<div class="input-group">
-								{/* <div class="input-group-append">
-									<span class="input-group-text attach_btn"><i class="fas fa-paperclip"></i></span>
-								</div> */}
-								<textarea name="" class="form-control type_msg" placeholder="Type your message..."></textarea>
 								<div class="input-group-append">
-									<span class="input-group-text send_btn"><i class="fa-solid fa-user"></i></span>
+									<span class="input-group-text attach_section h-100">
+									</span>
+								</div>
+								<textarea name="" class="form-control type_msg" placeholder="Type your message..." onChange={e => handleMessageInput(e)} value={messageText}></textarea>
+								<div class="input-group-append">
+									<span class="input-group-text send_btn h-100" onClick={e => handleSendMessage(e)}>
+										<FontAwesomeIcon icon={faPaperPlane} 
+										color={user.isPasswordValid
+											? "#90EE90"
+											: "#ff4040"}
+										/>
+									</span>
 								</div>
 							</div>
 						</div>

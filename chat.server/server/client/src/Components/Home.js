@@ -1,11 +1,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Form, Button } from 'react-bootstrap';
-import { useEffect, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import {  useState } from 'react';
 
 
 
-const Home = ({ user, channel, connection, isConnectionLoading, userConnection }) => {
+const Home = ({ user, connection, isConnectionLoading }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -27,24 +25,6 @@ const Home = ({ user, channel, connection, isConnectionLoading, userConnection }
     connection.send("ReturnLoginAttempt", user)
   }
   
-  const isVisible = () => {
-    if(user && user.isPasswordValid) return <>
-    <hr className="my-4"/>
-      <div className='col-md-10 mx-auto col-lg-5'>
-        <div className=''>
-          <div className="form-floating mb-3">
-            <input type='password' className="form-control" id="floatingPassword" placeholder="NewPassword" onChange={e => setNewPassword(e.target.value)}/>
-            <label for="floatingPassword">New Password</label>
-          </div>
-        </div>
-      </div>
-    <button className="w-47 btn btn-lg btn-secondary" type="button" onClick={e => handleClick(e, "Update")}>Update Password</button>
-    <hr className="my-4"/>
-    <button className="w-47 btn btn-lg btn-secondary" type="button" onClick={e => handleClick(e, "Logout")}>Logout</button>
-    </>
-    return <></>
-  }
-
   return(
     <>
     <div className='Home-Container col-xl-10 col-xxl-8 px-4 py-5'>

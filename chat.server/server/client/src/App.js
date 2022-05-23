@@ -37,7 +37,7 @@ function App() {
   const [messages, setMessages] = useState([])
   const [userConnection, setUserConnection] = useState(blankUserConnection)
   const [availableChannels, setAvailableChannels] = useState([])
-  const [connectedUsers, setConnectedUsers] = useState([])
+  const [connectedUsers, setConnectedUsers] = useState(null)
   const [user, setUser] = useState(blankUser)
   const [channel, setChannel] = useState(blankChannel)
 
@@ -85,7 +85,7 @@ function App() {
         setConnectedUsers(param)
       })
       
-      connection.send("ReturnAvailableChannels")
+      connection.send("ConnectionSetup")
     })
     .catch(e => console.log(e))
     },[connection])
@@ -107,7 +107,6 @@ function App() {
 
   return (
     <>
-    {/* <div className='app container-fluid vh-100 d-flex flex-column '> */}
       <Router>
         <div className='container-fluid bg-dark text-white'>
           <nav className='d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
@@ -116,24 +115,15 @@ function App() {
               <Link to="/Channel/1" className="nav-link px-2 text-white">Channels</Link>              
             </ul>
             <div className="col-md-3 text-end">
-              {/* <button type="button" className="btn btn-outline-primary me-2">Login</button> */}
+              <button type="button" className="btn btn-primary me-2">Log Out</button>
           </div>
           </nav>
         </div>
         <Routes>
-          <Route path="/" element={<Home userConnection={userConnection} user={user} channel={channel} isConnectionLoading={isConnectionLoading} connection={connection}/>}/>
-          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} connectedUsers={connectedUsers} messages={messages} isConnectionLoading={isConnectionLoading} setConnectedUsers={setConnectedUsers} setMessages={setMessages} connection={connection} availableChannels={availableChannels} userConnection={userConnection} setUserConnection={setUserConnection} />}/>
-            {/* <Route path=":ActiveChannelID" element={<ActiveChannel isConnectionLoading={isConnectionLoading} availableChannels={availableChannels} connection={connection} messages={messages} connectedUsers={connectedUsers} userConnection={userConnection}/>}/> */}
-          
-          {/* <Route path="/Login" element={<Landing userConnection={userConnection} setUserConnection={setUserConnection} />}>
-            <Route path="Returning" element={<User_CheckReturning connection={connection}/>}/>
-            <Route path="Create" element={<User_CreateNew connection={connection}/>}/>
-            <Route path="Guest" element={<User_CreateGuest connection={connection}/>}/>
-            <Route path="Update" element={<User_UpdatePassword connection={connection}/>}/>
-          </Route> */}
+          <Route path="/" element={<Home user={user} connection={connection} isConnectionLoading={isConnectionLoading}/>}/>
+          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} isConnectionLoading={isConnectionLoading} />}/>
         </Routes>
       </Router>
-    {/* </div> */}
     </>
   );
 }

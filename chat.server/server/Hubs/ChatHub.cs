@@ -28,6 +28,12 @@ namespace server.Hubs
             _channelManagement = new ChannelManagement();
         }
 
+        public void ConnectionSetup()
+        {
+            _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { Channel = _channel, User = _user });
+            ReturnAvailableChannels();
+        }
+
         public void ReturnAvailableChannels()
         {
             List<Channel> channels = _queryManagement.ReturnAvailableChannels_List();
@@ -66,7 +72,7 @@ namespace server.Hubs
             }
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
             await Clients.Caller.SendAsync("ReturnedChannel", newChannel); //NEW
-            SendConnectedUsersInChannel(newChannel);
+            //SendConnectedUsersInChannel(newChannel);
             SendConnectedUsersInChannel(userConnection.Channel);
         }
 
@@ -99,6 +105,11 @@ namespace server.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            //UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+            //_connectionManagement.RemoveUserConnection_Void(Context.ConnectionId);
+            //if(userConnection.User.IsPasswordValid == true )
+            //    SendMessageToChannel()
+            
             //try
             //{
             //    UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
