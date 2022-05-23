@@ -73,13 +73,11 @@ namespace server.Hubs
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
             await Clients.Caller.SendAsync("ReturnedChannel", newChannel); //NEW
             //SendConnectedUsersInChannel(newChannel);
-            SendConnectedUsersInChannel(userConnection.Channel);
+            SendConnectedUsers();
         }
 
-        private void SendConnectedUsersInChannel(Channel channel)
+        private void SendConnectedUsers()
         {
-            //var connectedUsers = _connectionManagement.GetUserConnectionsOnChannel_List(channel);
-            //Clients.Group(channel.Name).SendAsync("ReturnedConnectedUsers", connectedUsers);
             List<UserConnection> connectedUsers = _connectionManagement.GetAllUserConnections_List();
             Clients.All.SendAsync("ReturnedConnectedUsers", connectedUsers);
         }
@@ -105,28 +103,12 @@ namespace server.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            //UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
-            //_connectionManagement.RemoveUserConnection_Void(Context.ConnectionId);
-            //if(userConnection.User.IsPasswordValid == true )
-            //    SendMessageToChannel()
-            
-            //try
-            //{
-            //    UserConnection userConnection = _connections.GetConnection(Context.ConnectionId);
-            //    //_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection);
-            //    if (userConnection.User.IsPasswordValid == true)
-            //        SendMessageToChannel(userConnection.Channel, $"{userConnection.User.Username} has left the {userConnection.Channel.Name}", true);
-            //    _connections.RemoveConnection(Context.ConnectionId);
-            //    //_connections.Remove(Context.ConnectionId);
-            //    if (userConnection.Channel != null)
-            //        SendUsersInChannel(userConnection.Channel);
-            //    return base.OnDisconnectedAsync(exception);
-            //}
-            //catch (Exception)
-            //{
-            //    return Task.CompletedTask;
-            //    //throw;
-            //}
+            UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+            if (userConnection == null) return Task.CompletedTask;
+            if (userConnection.User.IsPasswordValid == true)
+                SendMessageToChannel(new Message { Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel, isBot = true });
+            _connectionManagement.RemoveUserConnection_Void(Context.ConnectionId);
+            SendConnectedUsers();
             return Task.CompletedTask;
         }
     }
