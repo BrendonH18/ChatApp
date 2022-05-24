@@ -26,13 +26,26 @@ namespace server.Hubs.HubSupport
                 return loCredential;
             }
         }
-        public User CreateNewUser(User user)
-        {
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
+        public bool DoesUserExist(User user)
+        {
             using (var session = myFactory.OpenSession())
             {
-                session.Save(user);
+                var loCredential = session.Query<User>()
+                    .Where(x => x.Username == user.Username)
+                    .ToList();
+                if (loCredential.Count() == 0) return false;
+                return true;
+            }
+        }
+
+        public User CreateNewUser(User user)
+        {
+            if(DoesUserExist(user) == true) return user;
+            string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            using (var session = myFactory.OpenSession())
+            {
+                session.Save(new User { Password = hashPassword, Username = user.Username});
                 session.Flush();
             }
             return user;

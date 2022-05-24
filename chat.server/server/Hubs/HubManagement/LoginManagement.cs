@@ -27,7 +27,6 @@ namespace server.Hubs.HubSupport
                     goto case "Create";
                 case "Create":
                     user = _queryManagement.CreateNewUser(user);
-                    user.Password = user.Username;
                     goto case "Returning";
                 case "Returning":
                     user = IsValidUser(user);

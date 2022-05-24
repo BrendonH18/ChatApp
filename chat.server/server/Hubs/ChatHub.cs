@@ -40,14 +40,26 @@ namespace server.Hubs
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedAvailableChannels", channels);
         }
 
+        public void UpdatePassword(User user)
+        {
+            UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+            user.Username = userConnection.User.Username;
+            user.LoginType = "Update";
+            user = _loginManagement.CreateLoginResponse(user);
+            if (user.IsPasswordValid == false)
+            {
+                Clients.Caller.SendAsync("ReturnedUpdatePassword", false);
+                return;
+            }
+            user = _queryManagement.UpdatePasswordForUser(user);
+            Clients.Caller.SendAsync("ReturnedUpdatePassword", true);
+        }
+
         public void ReturnLoginAttempt(User user)
         {
             User loginResponse = _loginManagement.CreateLoginResponse(user);
-            if (user.LoginType == "Update" && user.IsPasswordValid == true)
-                loginResponse = _queryManagement.UpdatePasswordForUser(user);
-            if (user.LoginType == "Logout")
-                loginResponse = _user;
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = loginResponse, Channel = _channel });
+            SendConnectedUsers();
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", loginResponse);
         }
 
@@ -101,14 +113,22 @@ namespace server.Hubs
             //Clients.Caller.SendAskync("ReturnedPasswordUpdate", results_string);
         //}
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public void Logout()
         {
             UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
-            if (userConnection == null) return Task.CompletedTask;
+            if (userConnection == null) return;
             if (userConnection.User.IsPasswordValid == true)
                 SendMessageToChannel(new Message { Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel, isBot = true });
-            _connectionManagement.RemoveUserConnection_Void(Context.ConnectionId);
+            Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", _user);
+            userConnection.User = _user;
+            _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, userConnection);
             SendConnectedUsers();
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            Logout();
+            _connectionManagement.RemoveUserConnection_Void(Context.ConnectionId);
             return Task.CompletedTask;
         }
     }

@@ -98,9 +98,9 @@ const handleSendMessage = (e) =>{
 
   useEffect(() => {
 	if(!availableChannels) return
-	if(typeof ActiveChannelID === "undefined") return
-	let id = parseInt(ActiveChannelID)
-	if(id === 0) id = 1
+	if(!connection) return
+	let id = 1;
+	if(parseInt(ActiveChannelID) !== 0 || typeof ActiveChannelID !== "undefined") id = parseInt(ActiveChannelID)
 	if(id === parseInt(channel.id)) return
 	connection.send("JoinChannel", availableChannels[ id - 1 ])
   }, [ActiveChannelID, availableChannels])

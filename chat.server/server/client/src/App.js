@@ -54,6 +54,12 @@ function App() {
     .catch(e => console.log(e))
     },[connection])
 
+    const handleLogout = (e) => {
+      e.preventDefault()
+      if(!connection) return
+      connection.send("Logout")
+    }
+
   return (
     <>
       <Router>
@@ -63,9 +69,16 @@ function App() {
               <Link to="/" className="nav-link px-2 text-white">Home/Login</Link>
               <Link to="/Channel/1" className="nav-link px-2 text-white">Channels</Link>              
             </ul>
-            <div className="col-md-3 text-end">
-              <button type="button" className="btn btn-primary me-2">Log Out</button>
-          </div>
+          {user && user.isPasswordValid
+            ? <>
+            <div className='col-md-3 text-center'>
+                <div className='px-2 text-white'>{`Welcome, ${user.username}!`}</div>
+            </div>
+            <div className="col-md-1 text-end">
+              <button type="button" className="btn btn-primary me-2" onClick={e => handleLogout(e)}>Log Out</button>
+            </div>
+            </>
+            : <></>}
           </nav>
         </div>
         <Routes>

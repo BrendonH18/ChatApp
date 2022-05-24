@@ -8,17 +8,39 @@ const Home = ({ user, connection }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [isPasswordUpdated, setIsPasswordUpdated] = useState(null)
+  
 
-  const handleClick = (e, type) => {
+  const handleLogin = (e, type) => {
     e.preventDefault()
     if(!connection) return console.log("Not Connected")
     const user = {
       username: username,
       password: password,
-      newPassword: newPassword,
       loginType: type
     }
+    setUsername('')
+    setPassword('')
+    setNewPassword('')
     connection.send("ReturnLoginAttempt", user)
+  }
+  
+  const handleUpdate = (e) => {
+    e.preventDefault()
+    const user = {
+      password: password,
+      newPassword: newPassword,
+    }
+    setPassword('')
+    setNewPassword('')
+    connection.on("ReturnedUpdatePassword", (param) => setIsPasswordUpdated(param))
+    connection.send("UpdatePassword", user)
+  }
+
+  const formatPasswordUpdateButton = () => {
+    if (isPasswordUpdated === true) return <button className="w-47 btn btn-lg btn-success" type="button" onClick={e => handleUpdate(e)}>Updated!</button>
+    if (isPasswordUpdated === false) return <button className="w-47 btn btn-lg btn-danger" type="button" onClick={e => handleUpdate(e)}>Incorrect Password</button>
+    return <button className="w-47 btn btn-lg btn-primary" type="button" onClick={e => handleUpdate(e)}>Update Password</button>
   }
   
   return(
@@ -27,28 +49,45 @@ const Home = ({ user, connection }) => {
       <div className='row align-items-center g-lg-5 py-5'>
         <div className='column col-lg-7 text-center text-lg-start'>
           <h1 className="display-4 fw-bold lh-1 mb-3">Talk to Me: </h1>
-          <p className="col-lg-10 fs-4">Below is an example form built entirely with Bootstrap’s form controls. Each required form group has a validation state that can be triggered by attempting to submit the form without completing it.</p>
+          <p className="col-lg-10 fs-4">Explore the world through chat. Login to join the conversation, or observe as a guest!</p>
         </div>
         <div className="col-md-10 mx-auto col-lg-5">
           <form className='p-4 p-md-5 border rounded-3 bg-light'>
+            {user && user.isPasswordValid
+              ? <>
             <div className='form-floating mb-3'>
-              <input type='text' className='form-control' id='floatingInput' placeholder='Username' onChange={e => setUsername(e.target.value)}/>
+              <input type='password' className='form-control' id='floatingInput' placeholder='Old Password' value={password} onChange={e => setPassword(e.target.value)}/>
+              <label htmlFor="floatingInput">Old Password</label>
+            </div>
+            <div className="form-floating mb-3">
+              <input type='password' className="form-control" id="floatingPassword" placeholder="New Password" value={newPassword} onChange={e => setNewPassword(e.target.value)}/>
+              <label htmlFor="floatingPassword">New Password</label>
+            </div>
+            </>
+              : <>
+            <div className='form-floating mb-3'>
+              <input type='text' className='form-control' id='floatingInput' placeholder='Username' value={username} onChange={e => setUsername(e.target.value)}/>
               <label htmlFor="floatingInput">Username</label>
             </div>
             <div className="form-floating mb-3">
-              <input type='password' className="form-control" id="floatingPassword" placeholder="Password" onChange={e => setPassword(e.target.value)}/>
+              <input type='password' className="form-control" id="floatingPassword" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}/>
               <label htmlFor="floatingPassword">Password</label>
             </div>
+            </>}
             <div className='row'>
-              <div className='column text-center d-flex justify-content-around'>
-                <button className="w-47 btn btn-lg btn-primary" type="button" onClick={e => handleClick(e, "Create")}>Register</button>
-                <button className="w-47 btn btn-lg btn-outline-secondary" type="button" onClick={e => handleClick(e, "Returning")}>Sign in</button>
-              </div>
+              {user && user.isPasswordValid
+              ? formatPasswordUpdateButton()
+              : <div className='column text-center d-flex justify-content-around'>
+                <button className="w-47 btn btn-lg btn-primary" type="button" onClick={e => handleLogin(e, "Create")}>Register</button>
+                <button className="w-47 btn btn-lg btn-outline-secondary" type="button" onClick={e => handleLogin(e, "Returning")}>Sign in</button>
+              </div>}
             </div>
-            <hr className="my-4"/>
+            {user && user.isPasswordValid
+            ? <></>
+            : <><hr className="my-4"/>
             <div className='row'>
-              <button className="w-47 btn btn-lg btn-secondary" type="button" onClick={e => handleClick(e, "Guest")}>Continue as Guest</button>
-            </div>
+              <button className="w-47 btn btn-lg btn-secondary" type="button" onClick={e => handleLogin(e, "Guest")}>Continue as Guest</button>
+            </div></>}
           </form>
         </div>
       </div>
