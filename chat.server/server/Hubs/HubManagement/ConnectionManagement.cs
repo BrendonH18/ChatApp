@@ -13,6 +13,7 @@ namespace server.Hubs.HubSupport
         List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel);
 
         List<UserConnection> GetAllUserConnections_List();
+        bool IsUserLoggedIn(User user);
     }
     public class ConnectionManagement : IAppConnection
     {
@@ -53,6 +54,17 @@ namespace server.Hubs.HubSupport
         {
             List<UserConnection> userConnections = _connections.Values.ToList();
             return userConnections;
+        }
+
+        public bool IsUserLoggedIn(User user)
+        {
+            List<UserConnection> connections = new List<UserConnection>();
+            connections = _connections.Values
+                .Where(x => x.User.IsPasswordValid == true && x.User.Username == user.Username)
+                .ToList();
+                //.Where(x => x.User.Username == user.Username);
+            if (connections.Count == 0) return false;
+            return true;
         }
     }
 }

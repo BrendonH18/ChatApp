@@ -22,6 +22,7 @@ namespace server.Hubs.HubSupport
             switch (user.LoginType)
             {
                 case "Guest":
+                    if (user.Username == "") return user;
                     user = AppendNumberToUsername(user);
                     user.Password = user.Username;
                     goto case "Create";
@@ -30,10 +31,7 @@ namespace server.Hubs.HubSupport
                     goto case "Returning";
                 case "Returning":
                     user = IsValidUser(user);
-                    user.Password = null;
                     return user;
-                case "Update":
-                    goto case "Returning";          
                 default:
                     return user;
             }
@@ -43,7 +41,6 @@ namespace server.Hubs.HubSupport
             if (loginType == "Guest") return true;
             if (loginType == "Create") return true;
             if (loginType == "Returning") return true;
-            if (loginType == "Update") return true;
             return false;
         }
 
@@ -54,7 +51,7 @@ namespace server.Hubs.HubSupport
             return user;
         }
         
-        private User IsValidUser(User user)
+        public User IsValidUser(User user)
         {
             var localUser = _queryManagement.ReturnUserFromUsername(user.Username);
             if (localUser == null)
@@ -64,6 +61,7 @@ namespace server.Hubs.HubSupport
             }
             user.IsPasswordValid = IsValidPassword(user.Password, localUser.Password);
             user.Id = user.IsPasswordValid ? localUser.Id : 0;
+            user.Password = null;
             return user;
         }
 

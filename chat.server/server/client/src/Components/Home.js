@@ -1,9 +1,11 @@
+import { faExclamationCircle, faUnderline } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {  useState } from 'react';
 
 
 
-const Home = ({ user, connection }) => {
+const Home = ({ user, setUser, connection }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -21,7 +23,6 @@ const Home = ({ user, connection }) => {
     }
     setUsername('')
     setPassword('')
-    setNewPassword('')
     connection.send("ReturnLoginAttempt", user)
   }
   
@@ -66,12 +67,28 @@ const Home = ({ user, connection }) => {
             </>
               : <>
             <div className='form-floating mb-3'>
-              <input type='text' className='form-control' id='floatingInput' placeholder='Username' value={username} onChange={e => setUsername(e.target.value)}/>
-              <label htmlFor="floatingInput">Username</label>
+              <input type='text' className='form-control' id='floatingInput' placeholder="Username" value={username} onChange={e => setUsername(e.target.value)}/>
+              {user && !user.isPasswordValid && (user.loginType === "Returning" || user.loginType === "Guest")
+                ?<>
+                <label htmlFor="floatingInput" className='text-danger'><FontAwesomeIcon icon={faExclamationCircle}/> Username</label>    
+                </>
+                :<>
+                <label htmlFor="floatingInput">Username</label>
+                </>}
+              
+              {/* <label htmlFor="floatingInput" className='text-danger'><FontAwesomeIcon icon={faExclamationCircle}/> Username</label> */}
             </div>
             <div className="form-floating mb-3">
-              <input type='password' className="form-control" id="floatingPassword" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}/>
-              <label htmlFor="floatingPassword">Password</label>
+              <input type='password' className="form-control" id="floatingPassword" placeholder='Password' value={password} onChange={e => setPassword(e.target.value)}/>
+              {user && !user.isPasswordValid && user.loginType === "Returning"
+                ?<>
+                <label htmlFor="floatingPassword" className='text-danger'><FontAwesomeIcon icon={faExclamationCircle}/> Password</label>    
+                </>
+                :<>
+                <label htmlFor="floatingPassword">Password</label>
+                </>}
+              
+              {/* <label htmlFor="floatingPassword">Password</label> */}
             </div>
             </>}
             <div className='row'>

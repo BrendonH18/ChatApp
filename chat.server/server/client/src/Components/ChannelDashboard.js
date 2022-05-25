@@ -25,7 +25,7 @@ const formatMessageSend = (message) => { return <>
 		</div>
 		<div className="msg_container">
 			{message.text}
-			<span className="msg_time">{message.created_on}</span>
+			<span className="msg_time">{new Date(message.created_on).toString()}</span>
 		</div>
 	</div>
 	</>
@@ -35,7 +35,7 @@ const formatMessageReceive = (message) => { return <>
 	<div className="d-flex justify-content-end mb-4">
 		<div className="msg_container_send">
 			{message.text}
-			<span className="msg_time_send">{message.created_on}</span>
+			<span className="msg_time_send">{new Date(message.created_on).toString()}</span>
 		</div>
 		<div className="img_cont_msg">
 			<img prop="" src="" className="rounded-circle user_img_msg"/>
@@ -107,8 +107,8 @@ const handleSendMessage = (e) =>{
 
     return(
       <>
-      <div className="container-fluid h-100">
-			<div className="row justify-content-center h-100">
+      <div className="container-fluid hm-100">
+			<div className="row justify-content-center mh-100">
 				<div className="col-md-3 col-xl-3 chat">
 					<div className="card mb-sm-3 mb-md-0 contacts_card">
 						<div className="card-header">
@@ -148,7 +148,7 @@ const handleSendMessage = (e) =>{
 					</div>
 				</div>
 				<div className="col-md-2 col-xl-2 chat">
-					<div className="card">
+					<div className="card mb-sm-3 mb-md-0 contacts_card">
 						<div className="card-header msg_head">
 							<div className="d-flex bd-highlight">
 								<div className="img_cont">
@@ -180,9 +180,11 @@ const handleSendMessage = (e) =>{
 									: <></>}
 							</ul>
 						</div>
+						<div className="card-footer"></div>
 					</div>
 
 				</div>
+				
 				<div className="col-md-6 col-xl-6 chat">
 					<div className="card">
 						<div className="card-header msg_head">

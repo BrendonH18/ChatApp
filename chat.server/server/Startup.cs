@@ -48,8 +48,8 @@ namespace server
             productionProps.Add("connection.provider", "NHibernate.Connection.DriverConnectionProvider");
             productionProps.Add("dialect", "NHibernate.Dialect.PostgreSQL83Dialect");
             productionProps.Add("hibernate.connection.driver_class", "NHibernate.Driver.NpgsqlDriver");
-            //productionProps.Add("connection.connection_string", "Server = 127.0.0.1; Port = 5432; Database = postgres; User Id = postgres; Password = password");
-            productionProps.Add("connection.connection_string", "Server=jelani.db.elephantsql.com;Port=5432;Username=utzedayv;Password=VUeNGDd0UKc_tek3BRXRtYDBCeP0Z7_S;Database=utzedayv");
+            productionProps.Add("connection.connection_string", "Server = 127.0.0.1; Port = 5432; Database = postgres; User Id = postgres; Password = password");
+            //productionProps.Add("connection.connection_string", "Server=jelani.db.elephantsql.com;Port=5432;Username=utzedayv;Password=VUeNGDd0UKc_tek3BRXRtYDBCeP0Z7_S;Database=utzedayv");
             productionProps.Add("show_sql", "true");
 
             var cfg = new NHibernate.Cfg.Configuration()
@@ -84,14 +84,14 @@ namespace server
                 endpoints.MapHub<ChatHub>("/chat");
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "client";
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
+            //app.UseSpa(spa =>
+            //{
+            //    spa.Options.SourcePath = "client";
+            //    if (env.IsDevelopment())
+            //    {
+            //        spa.UseReactDevelopmentServer(npmScript: "start");
+            //    }
+            //});
         }
     }
 }

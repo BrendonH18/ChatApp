@@ -31,7 +31,7 @@ function App() {
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('/chat')
+    .withUrl('https://localhost:44314/chat')
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
@@ -82,7 +82,7 @@ function App() {
           </nav>
         </div>
         <Routes>
-          <Route path="/" element={<Home user={user} connection={connection} />}/>
+          <Route path="/" element={<Home user={user} setUser={setUser} connection={connection} />}/>
           <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>
