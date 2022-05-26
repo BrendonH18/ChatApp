@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import ChannelDashboard from './Components/ChannelDashboard';
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
+import { Offcanvas } from 'bootstrap';
 
 function App() {
 
@@ -27,6 +28,9 @@ function App() {
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
   const [user, setUser] = useState(blankUser)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetNewPassword, setResetNewPassword] = useState('')
+  const [isPasswordUpdated, setIsPasswordUpdated] = useState()
 
 
   useEffect(() => {
@@ -49,6 +53,7 @@ function App() {
       connection.on("ReturnedChannel", (param) => setChannel(param))
       connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
       connection.on("ReturnedConnectedUsers", (param) => setConnectedUsers(param))
+      connection.on("ReturnedUpdatePassword", (param) => setIsPasswordUpdated(param))
       connection.send("ConnectionSetup")
     })
     .catch(e => console.log(e))
@@ -58,6 +63,17 @@ function App() {
       e.preventDefault()
       if(!connection) return
       connection.send("Logout")
+    }
+
+    const handlePasswordReset = (e) => {
+      e.preventDefault()
+      const user = {
+        password: resetPassword,
+        newPassword: resetNewPassword,
+      }
+      setResetPassword('')
+      setResetNewPassword('')
+      connection.send("UpdatePassword", user)
     }
 
   return (
@@ -74,13 +90,33 @@ function App() {
             <div className='col-md-3 text-center'>
                 <div className='px-2 text-white'>{`Welcome, ${user.username}!`}</div>
             </div>
-            <div className="col-md-1 text-end">
+            <div className="col-md-3text-end">
+              <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Update Password</button>
               <button type="button" className="btn btn-primary me-2" onClick={e => handleLogout(e)}>Log Out</button>
             </div>
             </>
             : <></>}
           </nav>
         </div>
+<div className="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+  <div className="offcanvas-header">
+    <h5 id="offcanvasRightLabel">Update Password</h5>
+    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div className="offcanvas-body">
+    <div className='form-floating mb-3'>
+      <input type='password' className='form-control' id='floatingInput' placeholder='Old Password' value={resetPassword} onChange={e => setResetPassword(e.target.value)}/>
+      <label htmlFor="floatingInput">Old Password</label>
+    </div>
+    <div className="form-floating mb-3">
+      <input type='password' className="form-control" id="floatingPassword" placeholder="New Password" value={resetNewPassword} onChange={e => setResetNewPassword(e.target.value)}/>
+      <label htmlFor="floatingPassword">New Password</label>
+    </div>
+    <button className="btn btn-lg btn-primary" type="button" onClick={e => handlePasswordReset(e)}>Update Password</button>
+  </div>
+  <div className='offcanvas-footer'>
+  </div>
+</div>
         <Routes>
           <Route path="/" element={<Home user={user} setUser={setUser} connection={connection} />}/>
           <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>

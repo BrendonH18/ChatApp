@@ -8,6 +8,5 @@
 		</id>
 		<property name="Username" column="username"/>
 		<property name="Password" column="password_hash"/>
-		<!--<property name="ScreenName" column="screenname"/>-->
 	</class>
 </hibernate-mapping>
