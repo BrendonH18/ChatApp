@@ -1,27 +1,41 @@
 import { faExclamationCircle, faUnderline } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {  useState } from 'react';
+import {  useEffect, useState } from 'react';
+import {useNavigate} from 'react-router-dom'
 
 
-
-const Home = ({ user, connection }) => {
+const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
+  let navigate = useNavigate()
+
   const handleLogin = (e, type) => {
     e.preventDefault()
     if(!connection) return console.log("Not Connected")
-    const user = {
+    const user1 = {
       username: username,
       password: password,
       loginType: type
     }
     setUsername('')
     setPassword('')
-    connection.send("ReturnLoginAttempt", user)
+    connection.send("ReturnLoginAttempt", user1)
   }
+
+  useEffect(() => {
+    if(!user.isPasswordValid) return
+    if(!isInitialLogin) return
+    setIsInitialLogin(false)
+    navigate(`/Channel/${firstChannelId}`)
+  }, [user])
+
+  useEffect(() => {
+    setMessages([])
+    setChannel(blankChannel)
+  }, [])
   
   // const formatPasswordUpdateButton = () => {
   //   if (isPasswordUpdated === true) return <button className="w-47 btn btn-lg btn-success" type="button" onClick={e => handleUpdate(e)}>Updated!</button>
@@ -37,26 +51,26 @@ const Home = ({ user, connection }) => {
           <h1 className="display-4 fw-bold lh-1 mb-3">Talk to Me: </h1>
           <p className="col-lg-10 fs-4">Explore the world through chat. Login to join the conversation, or observe as a guest!</p>
         </div>
-        <div className="col-md-10 mx-auto col-lg-5">
-          <form className='p-4 p-md-5 border rounded-3 bg-light'>
             {user && user.isPasswordValid
               ? <></>
               : <>
+        <div className="col-md-10 mx-auto col-lg-5">
+          <form className='p-4 p-md-5 border rounded-3 bg-light'>
             <div className='form-floating mb-3'>
               <input type='text' className='form-control' id='usernameInput' placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required/>
               <label htmlFor="usernameInput">Username</label>
               {user && !user.isPasswordValid && (user.loginType === "Returning")
                 ?<>
-                <div className='text-danger'>
-                  <FontAwesomeIcon icon={faExclamationCircle}/>  Please check your username
-                </div>
+              <div className='text-danger'>
+                <FontAwesomeIcon icon={faExclamationCircle}/>  Please check your username
+              </div>
                 </>
                 :<></>}
                 {user && !user.isPasswordValid && user.loginType === "Guest"
                 ?<>
-                <div className='text-danger'>
-                  <FontAwesomeIcon icon={faExclamationCircle}/>  Please enter a username
-                </div>
+              <div className='text-danger'>
+                <FontAwesomeIcon icon={faExclamationCircle}/>  Please enter a username
+              </div>
                 </>
                 :<></>}
             </div>
@@ -69,7 +83,6 @@ const Home = ({ user, connection }) => {
                 </div>
                 :<></>}
             </div>
-            </>}
             <div className='row'>
               {user && user.isPasswordValid
               ? <></>
@@ -79,13 +92,15 @@ const Home = ({ user, connection }) => {
               </div>}
             </div>
             {user && user.isPasswordValid
-            ? <></>
-            : <><hr className="my-4"/>
+              ? <></>
+              : <>
+            <hr className="my-4"/>
             <div className='row'>
               <button className="w-47 btn btn-lg btn-secondary" type="button" onClick={e => handleLogin(e, "Guest")}>Continue as Guest</button>
             </div></>}
           </form>
-        </div>
+        </div> 
+              </>}
       </div>
     </div>
     </>

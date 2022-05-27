@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPaperPlane, faSearch } from "@fortawesome/free-solid-svg-icons"
 
 
-const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, connection}) => {
+const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, connection, firstChannelId}) => {
 
 const [connectedUsersByChannelAndStatus, setConnectedUsersByChannelAndStatus] = useState(null)
 const [messageText, setMessageText] = useState('')
@@ -83,11 +83,13 @@ const groupByChannelId = (objArray) => {
 	return newArray
 }
 
-const handleChannelSelect = (channel) => {
-	navigate(`/Channel/${channel.id}`)
-}
+
 const handleMessageInput = (e) => {
 	setMessageText(e.target.value)
+}
+
+const handleChannelSelect = (channel) => {
+	navigate(`/Channel/${channel.id}`)
 }
 
 const handleMessageSubmitWithEnterKey = (e) => {
@@ -112,6 +114,8 @@ const handleSendMessage = (e) =>{
 	  if (search === "") return setTrimChannels(availableChannels)
 	  setTrimChannels( availableChannels.filter(ch => ch.name.toLowerCase().includes(search.toLowerCase())))
   }
+
+  
   
   useEffect(scrollToBottom, [messages])
 

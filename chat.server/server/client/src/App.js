@@ -31,11 +31,13 @@ function App() {
   const [resetPassword, setResetPassword] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()
+  const [isInitialLogin, setIsInitialLogin] = useState(true)
+  
 
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('https://localhost:44314/chat')
+    .withUrl('/chat')
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
@@ -63,6 +65,7 @@ function App() {
       e.preventDefault()
       if(!connection) return
       connection.send("Logout")
+      setIsInitialLogin(true)
     }
 
     const handlePasswordReset = (e) => {
@@ -83,7 +86,7 @@ function App() {
           <nav className='d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
             <ul className='nav col-12 col-md-auto mb-2 justify-content-center mb-md-0'>
               <Link to="/" className="nav-link px-2 text-white">Home/Login</Link>
-              <Link to="/Channel/1" className="nav-link px-2 text-white">Channels</Link>              
+              <Link to={`/Channel/${availableChannels?availableChannels[0]["id"]:1}`} className="nav-link px-2 text-white">Channels</Link>              
             </ul>
           {user && user.isPasswordValid
             ? <>
@@ -118,7 +121,7 @@ function App() {
   </div>
 </div>
         <Routes>
-          <Route path="/" element={<Home user={user} setUser={setUser} connection={connection} />}/>
+          <Route path="/" element={<Home user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
           <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>

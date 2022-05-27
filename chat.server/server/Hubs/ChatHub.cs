@@ -65,7 +65,7 @@ namespace server.Hubs
             UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
             if (userConnection == null) return;
             userConnection.User.LoginType = user.LoginType;
-            if (_connectionManagement.IsUserLoggedIn(user) == false)
+            if (userConnection.User.LoginType == "Guest" || _connectionManagement.IsUserLoggedIn(user) == false)
                 userConnection.User = _loginManagement.CreateLoginResponse(user);
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, userConnection);
             SendConnectedUsers();
