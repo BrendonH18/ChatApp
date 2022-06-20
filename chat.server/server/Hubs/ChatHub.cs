@@ -30,6 +30,8 @@ namespace server.Hubs
 
         public override Task OnConnectedAsync()
         {
+            var x = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
+            
             if (_connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId) == null)
                 _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { Channel = _channel, User = _user });
             return base.OnConnectedAsync();
