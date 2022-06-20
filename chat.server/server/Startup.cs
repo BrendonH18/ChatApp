@@ -10,15 +10,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using server.Models;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
 using NHibernate;
 using NHibernate.NetCore;
-using server.Hubs.HubSupport;
+using server.Hubs.HubManagement;
 
 namespace server
 {
@@ -41,7 +39,7 @@ namespace server
                         .AllowCredentials();
                 });
             });
-            services.AddSingleton<IAppConnection, ConnectionManagement>(options => new ConnectionManagement());
+            services.AddSingleton<IConnectionManagement, ConnectionManagement>(options => new ConnectionManagement());
 
             //NHibernate Automated
             var productionProps = new Dictionary<string, string>();

@@ -55,7 +55,10 @@ function App() {
       connection.on("ReturnedChannel", (param) => setChannel(param))
       connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
       connection.on("ReturnedConnectedUsers", (param) => setConnectedUsers(param))
-      connection.on("ReturnedUpdatePassword", (param) => setIsPasswordUpdated(param))
+      connection.on("ReturnedUpdatePassword", (param) => {
+        setIsPasswordUpdated(param)
+        console.log("Password update: ",param)
+      })
       connection.send("ConnectionSetup")
     })
     .catch(e => console.log(e))
@@ -104,7 +107,7 @@ function App() {
 <div className="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
   <div className="offcanvas-header">
     <h5 id="offcanvasRightLabel">Update Password</h5>
-    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" ></button>
   </div>
   <div className="offcanvas-body">
     <div className='form-floating mb-3'>
@@ -117,6 +120,9 @@ function App() {
     </div>
     <button className="btn btn-lg btn-primary" type="button" onClick={e => handlePasswordReset(e)}>Update Password</button>
   </div>
+  {isPasswordUpdated && isPasswordUpdated.isPasswordApproved
+    ? <div>Password Updated!</div>
+    : <div>Password FAILED!</div>}
   <div className='offcanvas-footer'>
   </div>
 </div>

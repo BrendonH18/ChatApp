@@ -6,9 +6,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace server.Hubs.HubSupport
+namespace server.Hubs.HubManagement
 {
-    public class QueryManagement : Hub
+    public interface IQueryManagement
+    {
+        public User ReturnUserFromUsername(string username);
+        public bool DoesUserExist(User user);
+        public User CreateNewUser(User user);
+        public List<Channel> ReturnAvailableChannels_List();
+        public List<Message> ReturnMessagesByChannel_List(Channel channel);
+        public void InsertMessage(Message message);
+        public User UpdatePasswordForUser(User user);
+
+    }
+    
+    public class QueryManagement : IQueryManagement
     {
         private readonly ISessionFactory myFactory;
         public QueryManagement(ISessionFactory factory)
@@ -34,7 +46,7 @@ namespace server.Hubs.HubSupport
                 var loCredential = session.Query<User>()
                     .Where(x => x.Username == user.Username)
                     .ToList();
-                if (loCredential.Count() == 0) return false;
+                if (loCredential.Count == 0) return false;
                 return true;
             }
         }

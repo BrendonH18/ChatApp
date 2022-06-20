@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using NHibernate;
-using server.Hubs.HubSupport;
+using server.Hubs.HubManagement;
 using server.Models;
 
 namespace server.Hubs
 {
     public class ChatHub : Hub
     {
-        private readonly IAppConnection _connectionManagement;
+        private readonly IConnectionManagement _connectionManagement;
         private readonly User _user;
         private readonly Channel _channel;
         private readonly LoginManagement _loginManagement;
-        private readonly QueryManagement _queryManagement;
+        private readonly IQueryManagement _queryManagement;
         private readonly ChannelManagement _channelManagement;
 
-        public ChatHub(IAppConnection connectionManagement, ISessionFactory factory)
+        public ChatHub(IConnectionManagement connectionManagement, ISessionFactory factory)
         {
             
             _connectionManagement = connectionManagement;
@@ -51,13 +51,16 @@ namespace server.Hubs
             UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
             user.Username = userConnection.User.Username;
             user = _loginManagement.IsValidUser(user);
+            UpdatePasswordResponse response = new();
             if (user.IsPasswordValid == false)
             {
-                Clients.Caller.SendAsync("ReturnedUpdatePassword", false);
+                response.IsPasswordApproved = false;
+                Clients.Caller.SendAsync("ReturnedUpdatePassword", response);
                 return;
             }
-            user = _queryManagement.UpdatePasswordForUser(user);
-            Clients.Caller.SendAsync("ReturnedUpdatePassword", true);
+            _queryManagement.UpdatePasswordForUser(user);
+            response.IsPasswordApproved = true;
+            Clients.Caller.SendAsync("ReturnedUpdatePassword", response);
         }
 
         public void ReturnLoginAttempt(User user)
@@ -89,8 +92,8 @@ namespace server.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, newChannel.Name);
             if (userConnection.User.Id != 0)
             {
-                await SendMessageToChannel(new Message { isBot = true, Text = $"{userConnection.User.Username} has entered {newChannel.Name}", Channel = newChannel});
-                await SendMessageToChannel(new Message { isBot = true, Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel});
+                await SendMessageToChannel(new Message { IsBot = true, Text = $"{userConnection.User.Username} has entered {newChannel.Name}", Channel = newChannel});
+                await SendMessageToChannel(new Message { IsBot = true, Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel});
             }
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, new UserConnection { User = userConnection.User, Channel = newChannel });
             await Clients.Caller.SendAsync("ReturnedChannel", newChannel);
@@ -112,7 +115,7 @@ namespace server.Hubs
             if (userConnection == null ) return Task.CompletedTask;
             if (!userConnection.User.IsPasswordValid ) return Task.CompletedTask;
             Message loMessage = _channelManagement.FormatNewMessage(paramMessage, userConnection);
-            if (!loMessage.isBot)
+            if (!loMessage.IsBot)
                 _queryManagement.InsertMessage(loMessage);
             return Clients.Group(loMessage.Channel.Name).SendAsync("ReturnedMessage", loMessage);
         }
@@ -122,7 +125,7 @@ namespace server.Hubs
             UserConnection userConnection = _connectionManagement.GetUserConnection_UserConnection(Context.ConnectionId);
             if (userConnection == null) return;
             if (userConnection.User.IsPasswordValid == true)
-                SendMessageToChannel(new Message { Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel, isBot = true });
+                SendMessageToChannel(new Message { Text = $"{userConnection.User.Username} has left {userConnection.Channel.Name}", Channel = userConnection.Channel, IsBot = true });
             userConnection.User = _user;
             _connectionManagement.UpdateUserConnection_Void(Context.ConnectionId, userConnection);
             Clients.Client(Context.ConnectionId).SendAsync("ReturnedUser", userConnection.User);
