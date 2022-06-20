@@ -1,12 +1,12 @@
 ﻿using server.Models;
 using System;
 
-namespace server.Hubs.HubSupport
+namespace server.Hubs.HubManagement
 {
     public class LoginManagement
     {
-        private readonly QueryManagement _queryManagement;
-        public LoginManagement(QueryManagement queryManagement)
+        private readonly IQueryManagement _queryManagement;
+        public LoginManagement(IQueryManagement queryManagement)
         {
             _queryManagement = queryManagement;
         }
@@ -23,7 +23,7 @@ namespace server.Hubs.HubSupport
             {
                 case "Guest":
                     if (user.Username == "") return user;
-                    user = AppendNumberToUsername(user);
+                    user.Username = CreateRandomUsername(user.Username);
                     user.Password = user.Username;
                     goto case "Create";
                 case "Create":
@@ -44,30 +44,45 @@ namespace server.Hubs.HubSupport
             return false;
         }
 
-        private User AppendNumberToUsername(User user)
+        public string CreateRandomUsername(string username)
         {
             var number = new Random().Next(1000, 10000).ToString();
-            user.Username = user.Username += number;
-            return user;
+            var newUsername = username += number;
+            return newUsername;
         }
         
         public User IsValidUser(User user)
         {
             var localUser = _queryManagement.ReturnUserFromUsername(user.Username);
+            //TEST
             if (localUser == null)
             {
                 user.IsPasswordValid = false;
                 return user;
             }
+            //TEST x2
             user.IsPasswordValid = IsValidPassword(user.Password, localUser.Password);
+            //TEST
             user.Id = user.IsPasswordValid ? localUser.Id : 0;
+            //TEST
             user.Password = null;
             return user;
         }
 
         public bool IsValidPassword(string stringPassword, string hashPassword)
         {
-            bool isValid = BCrypt.Net.BCrypt.Verify(stringPassword,hashPassword);
+            bool isValid = false;
+            try
+            {
+                isValid = BCrypt.Net.BCrypt.Verify(stringPassword, hashPassword);
+            }
+            catch (Exception x)
+            {
+                if (x.Message == "Invalid salt version")
+                    return false;
+
+                throw new ValidationException("Unable to verify password");
+            }
             return isValid;
         }
     }

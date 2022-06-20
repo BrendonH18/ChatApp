@@ -83,6 +83,9 @@ const groupByChannelId = (objArray) => {
 	return newArray
 }
 
+const isConnectedUsersByChannelAndStatusTruthy = () =>{
+	return connectedUsersByChannelAndStatus && connectedUsersByChannelAndStatus[channel.id] && connectedUsersByChannelAndStatus[channel.id]["Active"]
+}
 
 const handleMessageInput = (e) => {
 	setMessageText(e.target.value)
@@ -137,7 +140,7 @@ const handleSendMessage = (e) =>{
 
     return(
       <>
-      <div className="container-fluid hm-100">
+      <div className="container-fluid mh-100">
 			<div className="row justify-content-center mh-100">
 				<div className="col-md-3 col-xl-3 chat">
 					<div className="card mb-sm-3 mb-md-0 contacts_card">
@@ -186,7 +189,7 @@ const handleSendMessage = (e) =>{
 							<div className="d-flex bd-highlight">
 								<div className="img_cont">
 									<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTC9pw-3QlI-doodCy0D-bsxEBZ9lFTcTFsZQ&usqp=CAU" className="rounded-circle user_img"/>
-									{connectedUsersByChannelAndStatus
+									{isConnectedUsersByChannelAndStatusTruthy() 
 										? <span className={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"}></span>
 										: <></>}
 								</div>

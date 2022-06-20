@@ -1,20 +1,22 @@
 ﻿using server.Models;
 using System;
 
-namespace server.Hubs.HubSupport
+namespace server.Hubs.HubManagement
 {
     public class ChannelManagement
     {
         public Message FormatNewMessage(Message paramMessage, UserConnection userConnection)
         {
-            Message loMessage = new Message();
+            if (paramMessage.Text == null)
+                throw new ValidationException("Message text cannot be NULL");
+            if (paramMessage.Text.Length == 0)
+                throw new ValidationException("Message text length cannot be ZERO");
+            Message loMessage = new();
             loMessage.Created_on = DateTime.UtcNow;
             loMessage.User = userConnection.User;
-            loMessage.Channel = userConnection.Channel;
-            if (paramMessage.Channel != null)
-                loMessage.Channel = paramMessage.Channel;
+            loMessage.Channel = paramMessage.Channel ?? userConnection.Channel;
             loMessage.Text = paramMessage.Text;
-            loMessage.isBot = paramMessage.isBot;
+            loMessage.IsBot = paramMessage.IsBot;
             return loMessage;
         }
     }

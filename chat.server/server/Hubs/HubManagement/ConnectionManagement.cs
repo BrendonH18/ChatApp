@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace server.Hubs.HubSupport
+namespace server.Hubs.HubManagement
 {
-    public interface IAppConnection
+    public interface IConnectionManagement
     {
         void UpdateUserConnection_Void(string connectionID, UserConnection userConnection);
         UserConnection GetUserConnection_UserConnection(string connectionID);
@@ -15,9 +15,9 @@ namespace server.Hubs.HubSupport
         List<UserConnection> GetAllUserConnections_List();
         bool IsUserLoggedIn(User user);
     }
-    public class ConnectionManagement : IAppConnection
+    public class ConnectionManagement : IConnectionManagement
     {
-        public readonly Dictionary<string, UserConnection> _connections = new Dictionary<string, UserConnection>();
+        public readonly Dictionary<string, UserConnection> _connections = new();
 
         public void UpdateUserConnection_Void(string connectionId, UserConnection userConnection)
         {
@@ -42,7 +42,7 @@ namespace server.Hubs.HubSupport
         //}
         public List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel)
         {
-            List<UserConnection> connections = new List<UserConnection>();
+            List<UserConnection> connections = new();
             connections = _connections.Values
                 .Where(x=>x.Channel.Id == channel.Id && x.User.Id != 0)
                 .Distinct()
@@ -58,7 +58,7 @@ namespace server.Hubs.HubSupport
 
         public bool IsUserLoggedIn(User user)
         {
-            List<UserConnection> connections = new List<UserConnection>();
+            List<UserConnection> connections = new();
             connections = _connections.Values
                 .Where(x => x.User.IsPasswordValid == true && x.User.Username == user.Username)
                 .ToList();
