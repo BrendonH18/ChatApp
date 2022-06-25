@@ -1,24 +1,19 @@
 ﻿using NSubstitute;
 using NUnit.Framework;
-using server.Hubs.HubManagement;
+using server.Hubs.Services;
 using server.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Tests
 {
     [TestFixture]
-    internal class QueryManagementShould
+    internal class QueryServiceShould
     {
-        private IQueryManagement _sut;
+        private IQueryService _sut;
 
         [SetUp]
         public void Setup()
         {
-            _sut = Substitute.For<IQueryManagement>();
+            _sut = Substitute.For<IQueryService>();
         }
 
         [Test]

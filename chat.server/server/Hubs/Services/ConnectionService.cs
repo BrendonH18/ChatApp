@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace server.Hubs.HubManagement
+namespace server.Hubs.Services
 {
-    public interface IConnectionManagement
+    public interface IConnectionService
     {
         void UpdateUserConnection_Void(string connectionID, UserConnection userConnection);
         UserConnection GetUserConnection_UserConnection(string connectionID);
         void RemoveUserConnection_Void(string connectionID);
-
         List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel);
-
         List<UserConnection> GetAllUserConnections_List();
         bool IsUserLoggedIn(User user);
     }
-    public class ConnectionManagement : IConnectionManagement
+    public class ConnectionService : IConnectionService
     {
         public readonly Dictionary<string, UserConnection> _connections = new();
 

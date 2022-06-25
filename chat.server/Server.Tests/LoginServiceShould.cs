@@ -1,32 +1,97 @@
 ﻿using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using NUnit.Framework;
-using server.Hubs.HubManagement;
+using server.Hubs.Services;
 using server.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Tests
 {
     [TestFixture]
-    internal class LoginManagementShould
+    internal class LoginServiceShould
     {
-        private LoginManagement _sut;
-        private IQueryManagement _queryManagement;
+        private IQueryService _queryService;
+        private IConnectionService _connectionService;
+        private ILoginService _sut;
 
         [SetUp]
         public void Setup()
         {
-            _queryManagement = Substitute.For<IQueryManagement>();
-            _sut = new LoginManagement(_queryManagement);
+            _queryService = Substitute.For<IQueryService>();
+            _connectionService = Substitute.For<IConnectionService>();
+            _sut = new LoginService(_queryService, _connectionService);
+        }
+
+        [Test]
+        public void HandleReturnLoginAttempt_throws_if_userconnection_is_null()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        public void HandleReturnLoginAttempt_calls_create()
+        {
+            Assert.Fail();
+        }
+
+        [Test]
+        public void HandleUpdatePassword_calls_UpdatePasswordForUser_if_true()
+        {
+            string connectionId = Guid.NewGuid().ToString();
+            UserConnection userConnection = new UserConnection { 
+                User = new User
+                {
+                    Username = "Test"
+                }
+            };
+            User user1 = new User
+            {
+                Password = "TEST"
+            };
+            User user2 = new User 
+            { 
+                Password = BCrypt.Net.BCrypt.HashPassword(user1.Password)
+            };
+            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _queryService.ReturnUserFromUsername(userConnection.User.Username).Returns(user2);
+
+            _sut.HandleUpdatePassword(user1, connectionId);
+
+            _queryService.ReceivedWithAnyArgs(1).UpdatePasswordForUser(default);
+        }
+
+        [Test]
+        public void HandleUpdatePassword_not_calls_UpdatePasswordForUser_if_false()
+        {
+            string connectionId = Guid.NewGuid().ToString();
+            UserConnection userConnection = new UserConnection
+            {
+                User = new User
+                {
+                    Username = "Test"
+                }
+            };
+            User user1 = new User
+            {
+                Password = "TEST"
+            };
+            User user2 = new User
+            {
+                Password = BCrypt.Net.BCrypt.HashPassword("FALSE")
+            };
+
+            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _queryService.ReturnUserFromUsername(userConnection.User.Username).Returns(user2);
+
+            _sut.HandleUpdatePassword(user1, connectionId);
+
+            _queryService.DidNotReceiveWithAnyArgs().UpdatePasswordForUser(default);
         }
 
         [Test]
         public void CreateRandomUsername_should_return_valid_random_username()
         {
+            
             string testUsername = "TEST";
             var newUsername = _sut.CreateRandomUsername(testUsername);
             Assert.That(newUsername, Contains.Substring(testUsername));
@@ -40,7 +105,7 @@ namespace Server.Tests
             {
                 Username = "TESTusername"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).ReturnsNull();
+            _queryService.ReturnUserFromUsername(testUser.Username).ReturnsNull();
             var newUser = _sut.IsValidUser(testUser);
             Assert.That(newUser.IsPasswordValid, Is.False);
         }
@@ -53,7 +118,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Username = testUser.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(testUser.Password)
@@ -69,7 +134,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Username = testUser.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(testUser.Password)
@@ -85,7 +150,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Id = 5,
                 Username = testUser.Username,
@@ -103,7 +168,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Id = 5,
                 Username = testUser.Username,
@@ -121,7 +186,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Id = 5,
                 Username = testUser.Username,
@@ -138,7 +203,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Id = 5,
                 Username = testUser.Username,
@@ -155,7 +220,7 @@ namespace Server.Tests
                 Username = "TESTusername",
                 Password = "TESTpassword"
             };
-            _queryManagement.ReturnUserFromUsername(testUser.Username).Returns(new User
+            _queryService.ReturnUserFromUsername(testUser.Username).Returns(new User
             {
                 Id = 5,
                 Username = testUser.Username,

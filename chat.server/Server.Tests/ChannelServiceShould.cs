@@ -1,26 +1,97 @@
-﻿using NUnit.Framework;
-using server.Hubs.HubManagement;
+﻿using NSubstitute;
+using NUnit.Framework;
+using server.Hubs.Services;
 using server.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Tests
 {
     
     [TestFixture]
-    public class ChannelManagementShould
+    public class ChannelServiceShould
     {
-        private ChannelManagement _sut;
+        private IQueryService _queryService;
+        private IChannelService _sut;
 
         [SetUp]
         public void Setup()
         {
-            _sut = new();
+            _queryService = Substitute.For<IQueryService>();
+            _sut = new ChannelService(_queryService);
         }
-        
+
+        [Test]
+        public void return_zero_messages_if_userId_is_zero()
+        {
+            Channel testChannel = new();
+            var testUserConnection = new UserConnection
+            {
+                User = new User
+                {
+                    Id = 0
+                }
+            };
+
+            var messages = _sut.HandleCreateKnockMessages(testUserConnection,testChannel);
+
+            Assert.That(messages, Is.Not.Null);
+            Assert.That(messages.Count, Is.EqualTo(0));
+        }
+        [Test]
+        public void return_two_messages_if_userId_is_not_zero()
+        {
+            Channel testChannel = new();
+            var testUserConnection = new UserConnection
+            {
+                User = new User
+                {
+                    Id = 1
+                }
+            };
+
+            var messages = _sut.HandleCreateKnockMessages(testUserConnection, testChannel);
+
+            Assert.That(messages.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void insert_message_if_not_isbot()
+        {
+            var testMessage = new Message
+            {
+                Text = "TestMessageText",
+                Channel = new(),
+                IsBot = false
+            };
+            var testUserConnection = new UserConnection
+            {
+                User = new()
+            };
+
+            _sut.HandleNewMessage(testMessage,testUserConnection);
+
+            _queryService.ReceivedWithAnyArgs(1).InsertMessage(default);
+        }
+
+        [Test]
+        public void not_insert_message_if_isbot()
+        {
+            var testMessage = new Message
+            {
+                Text = "TestMessageText",
+                Channel = new(),
+                IsBot = true
+            };
+            var testUserConnection = new UserConnection
+            {
+                User = new()
+            };
+
+            _sut.HandleNewMessage(testMessage, testUserConnection);
+
+            _queryService.DidNotReceiveWithAnyArgs().InsertMessage(default);
+        }
+
         [Test]
         public void return_valid_message()
         {
@@ -147,6 +218,18 @@ namespace Server.Tests
 
         [Test]
         public void throw_exeption_when_text_is_zero()
+        {
+            var testMessage = new Message
+            {
+                Text = "",
+            };
+            var testUserConnection = new UserConnection();
+
+            Assert.Throws<ValidationException>(() => _sut.FormatNewMessage(testMessage, testUserConnection));
+        }
+
+        [Test]
+        public void throw_exeption_when_message_and_userconnection_not_have_channel()
         {
             var testMessage = new Message
             {

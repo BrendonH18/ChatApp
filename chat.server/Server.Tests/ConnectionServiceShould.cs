@@ -1,24 +1,20 @@
 ﻿using NSubstitute;
 using NUnit.Framework;
-using server.Hubs.HubManagement;
+using server.Hubs.Services;
 using server.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Tests
 {
     [TestFixture]
-    internal class ConnectionManagementShould
+    internal class ConnectionServiceShould
     {
-        private IConnectionManagement _sut;
+        private IConnectionService _sut;
         
         [SetUp]
         public void Setup()
         {
-            _sut = Substitute.For<IConnectionManagement>();
+            _sut = Substitute.For<IConnectionService>();
         }
 
         [Test]
@@ -29,7 +25,7 @@ namespace Server.Tests
 
             _sut.UpdateUserConnection_Void(mockConnectionID, mockUserConnection);
 
-            _sut.Received().UpdateUserConnection_Void(mockConnectionID, mockUserConnection);
+            _sut.Received(1).UpdateUserConnection_Void(mockConnectionID, mockUserConnection);
         }
 
         [Test]
@@ -39,7 +35,7 @@ namespace Server.Tests
 
             _sut.RemoveUserConnection_Void(mockConnectionID);
 
-            _sut.Received().RemoveUserConnection_Void(mockConnectionID);
+            _sut.Received(1).RemoveUserConnection_Void(mockConnectionID);
         }
 
         [Test]
@@ -49,7 +45,7 @@ namespace Server.Tests
 
             _sut.GetUserConnection_UserConnection(mockConnectionID);
 
-            _sut.Received().GetUserConnection_UserConnection(mockConnectionID);
+            _sut.Received(1).GetUserConnection_UserConnection(mockConnectionID);
         }
 
         [Test]
@@ -59,7 +55,7 @@ namespace Server.Tests
 
             _sut.GetUserConnectionsOnChannel_List(mockChannel);
 
-            _sut.Received().GetUserConnectionsOnChannel_List(mockChannel);
+            _sut.Received(1).GetUserConnectionsOnChannel_List(mockChannel);
         }
 
         [Test]
@@ -69,7 +65,7 @@ namespace Server.Tests
 
             _sut.GetAllUserConnections_List();
 
-            _sut.Received().GetAllUserConnections_List();
+            _sut.Received(1).GetAllUserConnections_List();
         }
     }
 }

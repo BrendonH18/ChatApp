@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace server.Hubs.HubManagement
+namespace server.Hubs.Services
 {
     [Serializable]
 

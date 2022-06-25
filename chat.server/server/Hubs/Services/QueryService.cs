@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace server.Hubs.HubManagement
+namespace server.Hubs.Services
 {
-    public interface IQueryManagement
+    public interface IQueryService
     {
         public User ReturnUserFromUsername(string username);
         public bool DoesUserExist(User user);
@@ -17,13 +17,12 @@ namespace server.Hubs.HubManagement
         public List<Message> ReturnMessagesByChannel_List(Channel channel);
         public void InsertMessage(Message message);
         public User UpdatePasswordForUser(User user);
-
     }
-    
-    public class QueryManagement : IQueryManagement
+
+    public class QueryService : IQueryService
     {
         private readonly ISessionFactory myFactory;
-        public QueryManagement(ISessionFactory factory)
+        public QueryService(ISessionFactory factory)
         {
             myFactory = factory;
         }
