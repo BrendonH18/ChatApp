@@ -20,10 +20,10 @@ namespace server.Hubs
         {
             
             _connectionService = connectionService;
-            _queryService = new QueryService(factory);
-            _loginService = new LoginService(_queryService,connectionService);
-            _channelService = new ChannelService(_queryService);
             _setupService = new SetupService(connectionService);
+            _queryService = new QueryService(factory);
+            _loginService = new LoginService(_queryService,connectionService, _setupService);
+            _channelService = new ChannelService(_queryService);
         }
 
         public override Task OnConnectedAsync()

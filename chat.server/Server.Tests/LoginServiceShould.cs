@@ -13,25 +13,61 @@ namespace Server.Tests
         private IQueryService _queryService;
         private IConnectionService _connectionService;
         private ILoginService _sut;
+        private ISetupService _setupService;
 
         [SetUp]
         public void Setup()
         {
             _queryService = Substitute.For<IQueryService>();
             _connectionService = Substitute.For<IConnectionService>();
-            _sut = new LoginService(_queryService, _connectionService);
+            _setupService = Substitute.For<ISetupService>();
+            _sut = new LoginService(_queryService, _connectionService, _setupService);
         }
 
         [Test]
-        public void HandleReturnLoginAttempt_throws_if_userconnection_is_null()
+        public void HandleReturnLoginAttempt_calls_CreateNewUser_if_IsUserLoggedIn_false()
         {
-            Assert.Fail();
+            string connectionId = Guid.NewGuid().ToString();
+            User user = new User
+            {
+                LoginType = "Create",
+                Password = "Test"
+            };
+            UserConnection userConnection = new UserConnection
+            {
+                User = user
+            };
+            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.IsUserLoggedIn(user).Returns(false);
+            _queryService.CreateNewUser(user).Returns(user);
+            _queryService.ReturnUserFromUsername(default).Returns(new User { Password = BCrypt.Net.BCrypt.HashPassword(userConnection.User.Password)});
+
+            _sut.HandleReturnLoginAttempt(user, connectionId);
+
+            _queryService.Received(1).CreateNewUser(user);
         }
 
         [Test]
-        public void HandleReturnLoginAttempt_calls_create()
+        public void HandleReturnLoginAttempt_not_calls_CreateNewUser_if_IsUserLoggedIn_true()
         {
-            Assert.Fail();
+            string connectionId = Guid.NewGuid().ToString();
+            User user = new User
+            {
+                LoginType = "Create",
+                Password = "Test"
+            };
+            UserConnection userConnection = new UserConnection
+            {
+                User = user
+            };
+            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.IsUserLoggedIn(user).Returns(true);
+            _queryService.CreateNewUser(user).Returns(user);
+            _queryService.ReturnUserFromUsername(default).Returns(new User { Password = BCrypt.Net.BCrypt.HashPassword(userConnection.User.Password) });
+
+            _sut.HandleReturnLoginAttempt(user, connectionId);
+
+            _queryService.DidNotReceive().CreateNewUser(user);
         }
 
         [Test]

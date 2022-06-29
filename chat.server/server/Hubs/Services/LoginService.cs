@@ -18,22 +18,21 @@ namespace server.Hubs.Services
     {
         private readonly IQueryService _queryService;
         private readonly IConnectionService _connectionService;
-        public LoginService(IQueryService queryServices, IConnectionService connectionService)
+        private readonly ISetupService _setupService;
+        public LoginService(IQueryService queryServices, IConnectionService connectionService, ISetupService setupService)
         {
             _queryService = queryServices;
             _connectionService = connectionService;
+            _setupService = setupService;
         }
         public UserConnection HandleReturnLoginAttempt(User user, string connectionId)
         {
+            _setupService.StoreInitialConnectionData(connectionId);
             UserConnection userConnection = _connectionService.GetUserConnection_UserConnection(connectionId);
-            //TEST
-            if (userConnection == null) 
-                throw new ValidationException("UserConnection Missing"); ;
             userConnection.User.LoginType = user.LoginType;
             //x2
-            if (userConnection.User.LoginType == "Guest" || _connectionService.IsUserLoggedIn(user) == false)
+            if (!_connectionService.IsUserLoggedIn(user))
                 userConnection.User = CreateLoginResponse(user);
-            //1
             _connectionService.UpdateUserConnection_Void(connectionId, userConnection);
             return userConnection;
         }
