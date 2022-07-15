@@ -1,5 +1,13 @@
-﻿using server.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using server.Models;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace server.Hubs.Services
 {
@@ -19,11 +27,13 @@ namespace server.Hubs.Services
         private readonly IQueryService _queryService;
         private readonly IConnectionService _connectionService;
         private readonly ISetupService _setupService;
-        public LoginService(IQueryService queryServices, IConnectionService connectionService, ISetupService setupService)
+        private readonly IConfiguration _config;
+        public LoginService(IQueryService queryServices, IConnectionService connectionService, ISetupService setupService, IConfiguration config)
         {
             _queryService = queryServices;
             _connectionService = connectionService;
             _setupService = setupService;
+            _config = config;
         }
         public UserConnection HandleReturnLoginAttempt(User user, string connectionId)
         {
@@ -93,6 +103,7 @@ namespace server.Hubs.Services
             return newUsername;
         }
         
+        
         public User IsValidUser(User user)
         {
             var localUser = _queryService.ReturnUserFromUsername(user.Username);
@@ -127,5 +138,56 @@ namespace server.Hubs.Services
             }
             return isValid;
         }
+
+        //public IActionResult Login(UserLogin userLogin)
+        //{
+        //    var user = Authenticate(userLogin);
+        //    if (user == null)
+        //        return NotFound("User not found.");
+        //    if (user.IsPasswordValid == false)
+        //        return NotFound("Invalid Password/Username");
+        //    var token = Generate(user);
+        //    return Ok(token);
+        //}
+
+        //private string Generate(User user)
+        //{
+        //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        //    var claims = new[]
+        //    {
+        //        new Claim(ClaimTypes.NameIdentifier, user.Username),
+        //    };
+
+        //    var token = new JwtSecurityToken(
+        //        _config["Jwt:Issuer"],
+        //        _config["Jwt:Audience"],
+        //        claims,
+        //        expires: DateTime.Now.AddHours(3),
+        //        signingCredentials: credentials
+        //        );
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+        //private User Authenticate(UserLogin userLogin)
+        //{
+        //    var user = _queryService.ReturnUserFromUsername(userLogin.UserName);
+        //    //TEST
+        //    if (user == null)
+        //        return user;
+        //    //TEST x2
+        //    user.IsPasswordValid = BCrypt.Net.BCrypt.Verify(userLogin.Password, user.Password);
+        //    //TEST
+        //    user.Id = user.IsPasswordValid ? user.Id : 0;
+        //    //TEST
+        //    return user;
+
+        //    //var currentUser = UserConstants.Users.FirstOrDefault(o => o.UserName.ToLower() == userLogin.UserName.ToLower() && o.Password == userLogin.Password);
+        //    //if (currentUser == null)
+        //    //    return null;
+        //    //return currentUser;
+        //}
     }
 }

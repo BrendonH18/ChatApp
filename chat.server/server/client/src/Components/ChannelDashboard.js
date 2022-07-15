@@ -59,10 +59,13 @@ const formatMessageReceive = (message) => { return <>
 }
 
 const groupByChannelId = (objArray) => {
+	console.log("Object :)", objArray)
 	if(!objArray) return
+	// if(objArray[0] == null) console.log("NULL", objArray[0])
 	if(!availableChannels) return
 	let newArray = {}
 	objArray.forEach(obj => {
+		if(obj == null) return;
 		let key = obj["channel"]["id"]
 		if(!newArray[key]){
 			newArray[key] = {}

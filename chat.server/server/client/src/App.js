@@ -6,6 +6,7 @@ import ChannelDashboard from './Components/ChannelDashboard';
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
 import { Offcanvas } from 'bootstrap';
+import {useLocalStorage} from './Components/useLocalStorage';
 
 function App() {
 
@@ -23,21 +24,22 @@ function App() {
   }
 
   const [availableChannels, setAvailableChannels] = useState(null)
-  const [channel, setChannel] = useState(blankChannel)
+  const [channel, setChannel] = useLocalStorage('channel', blankChannel)
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
-  const [user, setUser] = useState(blankUser)
+  const [user, setUser] = useLocalStorage('user', blankUser)
   const [resetPassword, setResetPassword] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()
   const [isInitialLogin, setIsInitialLogin] = useState(true)
+  const [token, setToken] = useLocalStorage('token', 'testing')
   
 
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('/chat')
+    .withUrl('/chat', { accessTokenFactory: () => token})
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)

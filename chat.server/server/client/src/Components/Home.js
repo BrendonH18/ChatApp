@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {  useEffect, useState } from 'react';
 import {useNavigate} from 'react-router-dom'
+import axios from 'axios'
 
 
 const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
@@ -12,7 +13,7 @@ const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChanne
 
   let navigate = useNavigate()
 
-  const handleLogin = (e, type) => {
+  const handleLogin = async (e, type) => {
     e.preventDefault()
     if(!connection) return console.log("Not Connected")
     const user1 = {
@@ -23,6 +24,9 @@ const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChanne
     setUsername('')
     setPassword('')
     connection.send("ReturnLoginAttempt", user1)
+    const response = await axios.post("https://localhost:44314/api/login/",user1)
+    console.log(response['data'])
+
   }
 
   useEffect(() => {
