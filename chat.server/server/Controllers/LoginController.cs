@@ -36,11 +36,13 @@ namespace server.Controllers
 
         private string Generate(UserModel user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
+            try
             {
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var claims = new[]
+                {
                 new Claim(ClaimTypes.NameIdentifier, user.UserName),
                 new Claim(ClaimTypes.Email, user.EmailAddress),
                 new Claim(ClaimTypes.GivenName, user.GivenName),
@@ -48,15 +50,21 @@ namespace server.Controllers
                 new Claim(ClaimTypes.Role, user.Role),
             };
 
-            var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"], 
-                _config["Jwt:Audience"], 
-                claims, 
-                expires: DateTime.Now.AddMinutes(15),
-                signingCredentials: credentials
-                );
+                var token = new JwtSecurityToken(
+                    _config["Jwt:Issuer"],
+                    _config["Jwt:Audience"],
+                    claims,
+                    expires: DateTime.Now.AddSeconds(5),
+                    signingCredentials: credentials
+                    );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            catch (Exception x)
+            {
+
+                throw;
+            }
         }
 
         private UserModel Authenticate(UserLogin userLogin)

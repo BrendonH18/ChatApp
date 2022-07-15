@@ -6,6 +6,7 @@ import ChannelDashboard from './Components/ChannelDashboard';
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
 import { Offcanvas } from 'bootstrap';
+import { useLocalStorage } from './Components/useLocalStorage';
 
 function App() {
 
@@ -27,25 +28,39 @@ function App() {
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
-  const [user, setUser] = useState(blankUser)
+  const [user, setUser] = useLocalStorage('user', blankUser)
   const [resetPassword, setResetPassword] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()
   const [isInitialLogin, setIsInitialLogin] = useState(true)
+  const [token, setToken] = useLocalStorage('token', 0)
+  const [count, setCount] = useLocalStorage('count', 0)
   
-
+  useEffect(()=>{
+    const newcount = count + 1
+    setCount(newcount)
+    console.log("Count", count)
+  },[token])
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('/chat')
+    .withUrl('/chat', { accessTokenFactory: () => token})
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
-  },[])
+  },[token])
 
   useEffect(() => {
     if(connection === null) return
     connection.start()
+    .then(() => {
+      const param = {
+        username: "jason_admin",
+      }
+      connection.on("ReturnedStartUpValidation", (param)=>console.log("Start Up:", param))
+      connection.send("ReturnStartUpValidation", param)
+      debugger
+    })
     .then(result => {
       connection.on("ReturnedMessage", (param) => { 
         if (param === "Reset") return setMessages([])
@@ -59,6 +74,7 @@ function App() {
         setIsPasswordUpdated(param)
         console.log("Password update: ",param)
       })
+      connection.on("ReturnedJWTTest", (param) => console.log("ReturnedJWTTest", param))
       connection.send("ConnectionSetup")
     })
     .catch(e => console.log(e))
@@ -127,7 +143,7 @@ function App() {
   </div>
 </div>
         <Routes>
-          <Route path="/" element={<Home user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
+          <Route path="/" element={<Home setToken={setToken} user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
           <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>

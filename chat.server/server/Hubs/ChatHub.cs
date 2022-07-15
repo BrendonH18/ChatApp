@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using NHibernate;
@@ -47,6 +49,24 @@ namespace server.Hubs
         {
             UpdatePasswordResponse response = _loginService.HandleUpdatePassword(user, Context.ConnectionId);
             Clients.Caller.SendAsync("ReturnedUpdatePassword", response);
+        }
+
+
+        public void ReturnJWTTest()
+        {
+
+            Clients.Caller.SendAsync("ReturnedJWTTest", Context.User.Identity.IsAuthenticated);
+        }
+
+        public Task ReturnStartUpValidation(UserModel user)
+        {
+            if (!Context.User.Identity.IsAuthenticated)
+                return Clients.Caller.SendAsync("ReturnedStartUpValidation", false);
+            var name = Context.User.Claims.Where(x => x.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value;
+            var claims = Context.User.Claims;
+            if (user.UserName != name)
+                return Clients.Caller.SendAsync("ReturnedStartUpValidation", false);
+            return Clients.Caller.SendAsync("ReturnedStartUpValidation", true);
         }
 
         public void ReturnLoginAttempt(User user)

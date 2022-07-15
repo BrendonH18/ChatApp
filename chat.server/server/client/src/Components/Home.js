@@ -3,16 +3,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {  useEffect, useState } from 'react';
 import {useNavigate} from 'react-router-dom'
+import axios from 'axios'
 
 
-const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
+const Home = ({ setToken, user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
   let navigate = useNavigate()
 
-  const handleLogin = (e, type) => {
+  const handleLogin = async (e, type) => {
     e.preventDefault()
     if(!connection) return console.log("Not Connected")
     const user1 = {
@@ -20,9 +21,24 @@ const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChanne
       password: password,
       loginType: type
     }
+
+    const user2 = {
+      username: "jason_admin",
+      password: "MyPass_w0rd"
+    }
+
     setUsername('')
     setPassword('')
-    connection.send("ReturnLoginAttempt", user1)
+    // connection.send("ReturnLoginAttempt", user1)
+    const result = await axios.post("https://localhost:44314/api/login", user2)
+    debugger
+    if (result.status == 200) {
+      setToken(result["data"])
+    } else {
+      setToken("ERROR")
+    }
+    debugger
+    connection.send("ReturnJWTTest")
   }
 
   useEffect(() => {
