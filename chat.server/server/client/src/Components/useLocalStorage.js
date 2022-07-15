@@ -18,5 +18,6 @@ export function useLocalStorage (key, initialValue) {
             return console.log(error)
         }
     }
+    console.log(window.localStorage)
     return [storedValue, setValue]
 }

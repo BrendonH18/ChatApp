@@ -24,7 +24,7 @@ function App() {
   }
 
   const [availableChannels, setAvailableChannels] = useState(null)
-  const [channel, setChannel] = useState(blankChannel)
+  const [channel, setChannel] = useLocalStorage('channel', blankChannel)
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
