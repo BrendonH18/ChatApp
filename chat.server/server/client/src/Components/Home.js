@@ -31,13 +31,11 @@ const Home = ({ setToken, user, isInitialLogin, setIsInitialLogin, connection, f
     setPassword('')
     // connection.send("ReturnLoginAttempt", user1)
     const result = await axios.post("https://localhost:44314/api/login", user2)
-    debugger
     if (result.status == 200) {
       setToken(result["data"])
     } else {
       setToken("ERROR")
     }
-    debugger
     connection.send("ReturnJWTTest")
   }
 

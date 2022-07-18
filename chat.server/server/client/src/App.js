@@ -59,7 +59,6 @@ function App() {
       }
       connection.on("ReturnedStartUpValidation", (param)=>console.log("Start Up:", param))
       connection.send("ReturnStartUpValidation", param)
-      debugger
     })
     .then(result => {
       connection.on("ReturnedMessage", (param) => { 
