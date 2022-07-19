@@ -8,7 +8,7 @@ namespace server.Models
     public class UserConnection
     {
         public virtual User User { get; set; }
-        public virtual Channel Channel { get; set; }
+        //public virtual Channel Channel { get; set; }
         public virtual string ConnectionId { get; set; }
     }
 }

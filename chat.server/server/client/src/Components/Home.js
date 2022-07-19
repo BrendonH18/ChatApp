@@ -24,18 +24,19 @@ const Home = ({ setToken, user, isInitialLogin, setIsInitialLogin, connection, f
 
     const user2 = {
       username: "jason_admin",
-      password: "MyPass_w0rd"
+      password: "MyPass_w0rd",
+      loginType: "Returning"
     }
 
     setUsername('')
     setPassword('')
-    // connection.send("ReturnLoginAttempt", user1)
-    const result = await axios.post("https://localhost:44314/api/login", user2)
-    if (result.status == 200) {
-      setToken(result["data"])
-    } else {
-      setToken("ERROR")
-    }
+    connection.send("ReturnLoginAttempt", user1)
+    // const result = await axios.post("https://localhost:44314/api/login", user2)
+    // if (result.status == 200) {
+      // setToken(result["data"])
+    // } else {
+      // setToken("ERROR")
+    // }
     connection.send("ReturnJWTTest")
   }
 

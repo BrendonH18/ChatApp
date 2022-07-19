@@ -33,9 +33,9 @@ namespace Server.Tests
         {
             var mockConnectionID = Guid.NewGuid().ToString();
 
-            _sut.RemoveUserConnection_Void(mockConnectionID);
+            _sut.RemoveUser(mockConnectionID);
 
-            _sut.Received(1).RemoveUserConnection_Void(mockConnectionID);
+            _sut.Received(1).RemoveUser(mockConnectionID);
         }
 
         [Test]
@@ -43,9 +43,9 @@ namespace Server.Tests
         {
             var mockConnectionID = Guid.NewGuid().ToString();
 
-            _sut.GetUserConnection_UserConnection(mockConnectionID);
+            _sut.GetUser_Username(mockConnectionID);
 
-            _sut.Received(1).GetUserConnection_UserConnection(mockConnectionID);
+            _sut.Received(1).GetUser_Username(mockConnectionID);
         }
 
         [Test]
@@ -53,9 +53,9 @@ namespace Server.Tests
         {
             var mockChannel = new Channel();
 
-            _sut.GetUserConnectionsOnChannel_List(mockChannel);
+            _sut.GetUsersOnChannel_List(mockChannel);
 
-            _sut.Received(1).GetUserConnectionsOnChannel_List(mockChannel);
+            _sut.Received(1).GetUsersOnChannel_List(mockChannel);
         }
 
         [Test]

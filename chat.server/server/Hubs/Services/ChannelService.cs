@@ -6,9 +6,9 @@ namespace server.Hubs.Services
 {
     public interface IChannelService
     {
-        public List<Message> HandleCreateKnockMessages(UserConnection userConnection, Channel newChannel);
-        public Message HandleNewMessage(Message paramMessage, UserConnection userConnection);
-        public Message FormatNewMessage(Message paramMessage, UserConnection userConnection);
+        public List<Message> HandleCreateKnockMessages(User userConnection, Channel enterChannel, Channel exitChannel);
+        public Message HandleNewMessage(string text, User user, Channel channel, bool isBot = false);
+        public Message FormatNewMessage(string text, User user, Channel channel, bool isBot = false);
     }
 
     public class ChannelService : IChannelService
@@ -18,48 +18,49 @@ namespace server.Hubs.Services
         {
             _queryService = queryService;
         }
-        public List<Message> HandleCreateKnockMessages(UserConnection userConnection, Channel newChannel)
+        public List<Message> HandleCreateKnockMessages(User user, Channel enterChannel, Channel exitChannel)
         {
             List<Message> messages = new();
-            if (userConnection.User.Id == 0)
+            if (user == null)
                 return messages;
             messages.Add(new Message { 
                 IsBot = true,
-                Channel = newChannel,
-                Text = $"{userConnection.User.Username} has entered {newChannel.Name}" 
+                Channel = enterChannel,
+                Text = $"{user.Username} has entered {enterChannel.Name}" 
             });
-            messages.Add(new Message
-            {
-                IsBot = true,
-                Channel = userConnection.Channel,
-                Text = $"{userConnection.User.Username} has left {newChannel.Name}"
-            });
+            if (exitChannel != null) 
+                messages.Add(new Message
+                {
+                    IsBot = true,
+                    Channel = exitChannel,
+                    Text = $"{user.Username} has left {exitChannel.Name}"
+                });
             return messages;
         }
 
-        public Message HandleNewMessage(Message paramMessage, UserConnection userConnection)
+        public Message HandleNewMessage(string text, User user, Channel channel, bool isBot = false)
         {
-            Message response = FormatNewMessage(paramMessage, userConnection);
-            if (!response.IsBot)
+            Message response = FormatNewMessage(text, user, channel, isBot);
+            if (!isBot)
                 _queryService.InsertMessage(response);
             return response;
         }
 
-        public Message FormatNewMessage(Message paramMessage, UserConnection userConnection)
+        public Message FormatNewMessage(string text, User user, Channel channel, bool isBot = false)
         {
-            if (paramMessage.Text == null)
+            if (text == null)
                 throw new ValidationException("Message text cannot be NULL");
-            if (paramMessage.Text.Length == 0)
+            if (text.Length == 0)
                 throw new ValidationException("Message text length cannot be ZERO");
-            if(paramMessage.Channel == null && userConnection.Channel == null)
-                throw new ValidationException("No parameter contains a Channel");
-            Message loMessage = new();
-            loMessage.Created_on = DateTime.UtcNow;
-            loMessage.User = userConnection.User;
-            loMessage.Channel = paramMessage.Channel ?? userConnection.Channel;
-            loMessage.Text = paramMessage.Text;
-            loMessage.IsBot = paramMessage.IsBot;
-            return loMessage;
+            if(channel == null)
+                throw new ValidationException("Message channel cannot be NULL");
+            Message message = new();
+            message.Created_on = DateTime.UtcNow;
+            message.User = user;
+            message.Channel = channel;
+            message.Text = text;
+            message.IsBot = isBot;
+            return message;
         }
     }
 }

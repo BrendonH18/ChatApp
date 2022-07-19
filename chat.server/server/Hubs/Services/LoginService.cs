@@ -13,13 +13,11 @@ namespace server.Hubs.Services
 {
     public interface ILoginService
     {
-        public UserConnection HandleReturnLoginAttempt(User user, string connectionId);
-        public UpdatePasswordResponse HandleUpdatePassword(User user, string connectionId);
-        public User CreateLoginResponse(User user);
-        public bool IsKnownLoginType(string loginType);
+        public void HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token);
+        public UpdatePasswordResponse HandleUpdatePassword(User user, string userName);
         public string CreateRandomUsername(string username);
-        public User IsValidUser(User user);
         public bool IsValidPassword(string stringPassword, string hashPassword);
+        public string GenerateJWT(User user);
     }
 
     public class LoginService : ILoginService
@@ -35,65 +33,59 @@ namespace server.Hubs.Services
             _setupService = setupService;
             _config = config;
         }
-        public UserConnection HandleReturnLoginAttempt(User user, string connectionId)
+        public void HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token)
         {
-            _setupService.StoreInitialConnectionData(connectionId);
-            UserConnection userConnection = _connectionService.GetUserConnection_UserConnection(connectionId);
-            userConnection.User.LoginType = user.LoginType;
-            //x2
-            if (!_connectionService.IsUserLoggedIn(user))
-                userConnection.User = CreateLoginResponse(user);
-            _connectionService.UpdateUserConnection_Void(connectionId, userConnection);
-            return userConnection;
+
+            returnUser = new UserModel();
+            token = String.Empty;
+
+            if (_connectionService.IsUserLoggedIn(user))
+                return;
+            CreateLoginResponse(user, ref returnUser, ref token);
+            _setupService.StoreInitialConnectionData(user); // Why not just one fuction "StoreConnectionData" ?
+            return;
         }
 
         public UpdatePasswordResponse HandleUpdatePassword(User user, string connectionId)
         {
-            UserConnection userConnection = _connectionService.GetUserConnection_UserConnection(connectionId);
+            return new UpdatePasswordResponse();
+            //UserConnection userConnection = _connectionService.GetUserConnection_UserConnection(connectionId);
 
-            //Do I need this?
-            user.Username = userConnection.User.Username;
-            user = IsValidUser(user);
-            UpdatePasswordResponse response = new UpdatePasswordResponse { IsPasswordApproved = user.IsPasswordValid};
-            if (response.IsPasswordApproved == false)
-                return response;
-            _queryService.UpdatePasswordForUser(user);
-            return response;
+            ////Do I need this?
+            //user.Username = userConnection.User.Username;
+            //user = IsValidUser(user);
+            //UpdatePasswordResponse response = new UpdatePasswordResponse { IsPasswordApproved = user.IsPasswordValid};
+            //if (response.IsPasswordApproved == false)
+            //    return response;
+            //_queryService.UpdatePasswordForUser(user);
+            //return response;
         }
 
 
 
-        public User CreateLoginResponse(User user)
+        public void CreateLoginResponse(User user, ref UserModel returnUser, ref string token)
         {
-            if (!IsKnownLoginType(user.LoginType))
-            {
-                user.Password = null;
-                user.IsPasswordValid = false;
-                return user;
-            }
             switch (user.LoginType)
             {
                 case "Guest":
-                    if (user.Username == "") return user;
+                    if (user.Username == "") return;
                     user.Username = CreateRandomUsername(user.Username);
                     user.Password = user.Username;
                     goto case "Create";
                 case "Create":
-                    user = _queryService.CreateNewUser(user);
+                    _queryService.HandleAddNewUser(user);
                     goto case "Returning";
                 case "Returning":
-                    user = IsValidUser(user);
-                    return user;
+                    var localUser = _queryService.ReturnUserFromUsername(user.Username);
+                    if (localUser == null) return;
+                    if (!IsValidPassword(user.Password, localUser.Password)) return;
+                    token = GenerateJWT(localUser);
+                    returnUser.Id = localUser.Id;
+                    returnUser.Username = localUser.Username;
+                    return;
                 default:
-                    return user;
+                    return;
             }
-        }
-        public bool IsKnownLoginType(string loginType)
-        {
-            if (loginType == "Guest") return true;
-            if (loginType == "Create") return true;
-            if (loginType == "Returning") return true;
-            return false;
         }
 
         public string CreateRandomUsername(string username)
@@ -104,90 +96,44 @@ namespace server.Hubs.Services
         }
         
         
-        public User IsValidUser(User user)
+        public bool IsValidUser(User user)
         {
             var localUser = _queryService.ReturnUserFromUsername(user.Username);
-            //TEST
-            if (localUser == null)
-            {
-                user.IsPasswordValid = false;
-                return user;
-            }
-            //TEST x2
-            user.IsPasswordValid = IsValidPassword(user.Password, localUser.Password);
-            //TEST
-            user.Id = user.IsPasswordValid ? localUser.Id : 0;
-            //TEST
-            user.Password = null;
-            return user;
+            if (localUser == null) return false;
+            return IsValidPassword(user.Password, localUser.Password);
         }
 
         public bool IsValidPassword(string stringPassword, string hashPassword)
         {
-            bool isValid = false;
-            try
-            {
-                isValid = BCrypt.Net.BCrypt.Verify(stringPassword, hashPassword);
-            }
-            catch (Exception x)
-            {
-                if (x.Message == "Invalid salt version")
-                    return false;
-
-                throw new ValidationException("Unable to verify password");
-            }
-            return isValid;
+            return BCrypt.Net.BCrypt.Verify(stringPassword, hashPassword);
         }
 
-        //public IActionResult Login(UserLogin userLogin)
-        //{
-        //    var user = Authenticate(userLogin);
-        //    if (user == null)
-        //        return NotFound("User not found.");
-        //    if (user.IsPasswordValid == false)
-        //        return NotFound("Invalid Password/Username");
-        //    var token = Generate(user);
-        //    return Ok(token);
-        //}
+        public string GenerateJWT(User user)
+        {
+            try
+            {
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        //private string Generate(User user)
-        //{
-        //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-        //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+                var claims = new[]
+                {
+                new Claim(ClaimTypes.NameIdentifier, user.Username),
+            };
 
-        //    var claims = new[]
-        //    {
-        //        new Claim(ClaimTypes.NameIdentifier, user.Username),
-        //    };
+                var token = new JwtSecurityToken(
+                    _config["Jwt:Issuer"],
+                    _config["Jwt:Audience"],
+                    claims,
+                    expires: DateTime.Now.AddSeconds(5),
+                    signingCredentials: credentials
+                    );
 
-        //    var token = new JwtSecurityToken(
-        //        _config["Jwt:Issuer"],
-        //        _config["Jwt:Audience"],
-        //        claims,
-        //        expires: DateTime.Now.AddHours(3),
-        //        signingCredentials: credentials
-        //        );
-
-        //    return new JwtSecurityTokenHandler().WriteToken(token);
-        //}
-
-        //private User Authenticate(UserLogin userLogin)
-        //{
-        //    var user = _queryService.ReturnUserFromUsername(userLogin.UserName);
-        //    //TEST
-        //    if (user == null)
-        //        return user;
-        //    //TEST x2
-        //    user.IsPasswordValid = BCrypt.Net.BCrypt.Verify(userLogin.Password, user.Password);
-        //    //TEST
-        //    user.Id = user.IsPasswordValid ? user.Id : 0;
-        //    //TEST
-        //    return user;
-
-        //    //var currentUser = UserConstants.Users.FirstOrDefault(o => o.UserName.ToLower() == userLogin.UserName.ToLower() && o.Password == userLogin.Password);
-        //    //if (currentUser == null)
-        //    //    return null;
-        //    //return currentUser;
-        //}
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

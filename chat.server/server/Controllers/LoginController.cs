@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using server.Hubs.Services;
 using server.Models;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,63 +17,67 @@ namespace server.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        private IConfiguration _config;
-
-        public LoginController(IConfiguration config)
+        private readonly IConfiguration _config;
+        private readonly ILoginService _loginService;
+        public LoginController(IConfiguration config, ILoginService loginService)
         {
             _config = config;
+            _loginService = loginService;
         }
 
         [AllowAnonymous]
         [HttpPost]
         public IActionResult Login([FromBody] UserLogin userLogin)
         {
-            var user = Authenticate(userLogin);
-            if (user == null)
-                return NotFound("User not found.");
-            var token = Generate(user);
-            return Ok(token);
+            return Ok();
+            //var user = Authenticate(userLogin);
+            //if (user == null)
+            //    return NotFound("User not found.");
+            //var token = GenerateJWT(user);
+            //return Ok(token);
         }
 
-        private string Generate(UserModel user)
+        private string GenerateJWT(UserModel user)
         {
-            try
-            {
-                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            return string.Empty;
+            //try
+            //{
+            //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-                var claims = new[]
-                {
-                new Claim(ClaimTypes.NameIdentifier, user.UserName),
-                new Claim(ClaimTypes.Email, user.EmailAddress),
-                new Claim(ClaimTypes.GivenName, user.GivenName),
-                new Claim(ClaimTypes.Surname, user.Surname),
-                new Claim(ClaimTypes.Role, user.Role),
-            };
+            //    var claims = new[]
+            //    {
+            //    new Claim(ClaimTypes.NameIdentifier, user.UserName),
+            //    new Claim(ClaimTypes.Email, user.EmailAddress),
+            //    new Claim(ClaimTypes.GivenName, user.GivenName),
+            //    new Claim(ClaimTypes.Surname, user.Surname),
+            //    new Claim(ClaimTypes.Role, user.Role),
+            //};
 
-                var token = new JwtSecurityToken(
-                    _config["Jwt:Issuer"],
-                    _config["Jwt:Audience"],
-                    claims,
-                    expires: DateTime.Now.AddSeconds(5),
-                    signingCredentials: credentials
-                    );
+            //    var token = new JwtSecurityToken(
+            //        _config["Jwt:Issuer"],
+            //        _config["Jwt:Audience"],
+            //        claims,
+            //        expires: DateTime.Now.AddSeconds(5),
+            //        signingCredentials: credentials
+            //        );
 
-                return new JwtSecurityTokenHandler().WriteToken(token);
-            }
-            catch (Exception x)
-            {
+            //    return new JwtSecurityTokenHandler().WriteToken(token);
+            //}
+            //catch (Exception x)
+            //{
 
-                throw;
-            }
+            //    throw;
+            //}
         }
 
-        private UserModel Authenticate(UserLogin userLogin)
+        private UserModel Authenticate(User userLogin)
         {
-            var currentUser = UserConstants.Users.FirstOrDefault(o => o.UserName.ToLower() == userLogin.UserName.ToLower() && o.Password == userLogin.Password);
-            if (currentUser == null)
-                return null;
-            return currentUser;
+            return new UserModel();
+            //var currentUser = _loginService.HandleReturnLoginAttempt(userLogin, Context);
+            //if (currentUser == null)
+            //    return null;
+            //return currentUser;
         }
 
         //[AllowAnonymous]

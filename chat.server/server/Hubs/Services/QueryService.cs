@@ -5,6 +5,7 @@ using server.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace server.Hubs.Services
 {
@@ -12,7 +13,7 @@ namespace server.Hubs.Services
     {
         public User ReturnUserFromUsername(string username);
         public bool DoesUserExist(User user);
-        public User CreateNewUser(User user);
+        public Task HandleAddNewUser(User user);
         public List<Channel> ReturnAvailableChannels_List();
         public List<Message> ReturnMessagesByChannel_List(Channel channel);
         public void InsertMessage(Message message);
@@ -50,16 +51,16 @@ namespace server.Hubs.Services
             }
         }
 
-        public User CreateNewUser(User user)
+        public Task HandleAddNewUser(User user)
         {
-            if(DoesUserExist(user) == true) return user;
+            if(DoesUserExist(user) == true) return Task.CompletedTask;
             string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password);
             using (var session = myFactory.OpenSession())
             {
                 session.Save(new User { Password = hashPassword, Username = user.Username});
                 session.Flush();
             }
-            return user;
+            return Task.CompletedTask;
         }
 
         public List<Channel> ReturnAvailableChannels_List()

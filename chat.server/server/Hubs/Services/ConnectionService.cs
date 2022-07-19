@@ -1,35 +1,41 @@
 ﻿using server.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace server.Hubs.Services
 {
     public interface IConnectionService
     {
-        void UpdateUserConnection_Void(string connectionID, UserConnection userConnection);
-        UserConnection GetUserConnection_UserConnection(string connectionID);
-        void RemoveUserConnection_Void(string connectionID);
-        List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel);
-        List<UserConnection> GetAllUserConnections_List();
-        bool IsUserLoggedIn(User user);
+        public User GetUser_Username(string userName);
+        public Task RemoveUserFromAll (User userName);
+        public List<User> GetUsersOnChannel_List(Channel channel);
+        public List<User> GetAllUsers_List();
+        public bool IsUserLoggedIn(User user);
+        public Task AddUserToChannel(User user, Channel channel);
+        public Task RemoveUserFromChannel(User user, Channel channel);
     }
     public class ConnectionService : IConnectionService
     {
-        public readonly Dictionary<string, UserConnection> _connections = new();
+        public readonly Dictionary<string, User> _connectedUsers = new();
+        public readonly Dictionary<string, List<User>> _usersByChannel = new();
 
-        public void UpdateUserConnection_Void(string connectionId, UserConnection userConnection)
+        public Task RemoveUserFromAll(User user)
         {
-            if (userConnection.ConnectionId != connectionId) userConnection.ConnectionId = connectionId;
-            _connections[connectionId] = userConnection;
+            //remove from Channels stored in User
+            //remove in general
+
+            //var userChannels = _channels
+                //.Where(x => x.Value.Contains(user))
+                //.ToList();
+            //RemoveUserFromChannel(user);
+            //_connections.Remove(connectionId);
+            return Task.CompletedTask;
         }
-        public void RemoveUserConnection_Void(string connectionId)
+        public User GetUser_Username (string userName)
         {
-            _connections.Remove(connectionId);
-        }
-        public UserConnection GetUserConnection_UserConnection (string connectionId)
-        {
-            _connections.TryGetValue(connectionId, out UserConnection userConnection);
-            return userConnection;
+            _connectedUsers.TryGetValue(userName, out User user);
+            return user;
         }
         //public List<UserConnection> GetConnectionsOnChannel(Channel channel)
         //{
@@ -38,30 +44,48 @@ namespace server.Hubs.Services
         //        .Where(x => x.Value.Channel.Id == channel.Id && x.Value.User.Id != 0)
         //        .ToList();
         //}
-        public List<UserConnection> GetUserConnectionsOnChannel_List(Channel channel)
+        public Task AddUserToChannel(User user, Channel channel)
         {
-            List<UserConnection> connections = new();
-            connections = _connections.Values
-                .Where(x=>x.Channel.Id == channel.Id && x.User.Id != 0)
-                .Distinct()
-                .ToList();
-            return connections;
+            _usersByChannel[channel.Name].Add(user);
+            var userObj = GetUser_Username(user.Username);
+            userObj.Channels.Add(channel);
+            // Perhaps an update function versus all the other functions
+            return Task.CompletedTask;
         }
 
-        public List<UserConnection> GetAllUserConnections_List()
+        public Task RemoveUserFromChannel(User user, Channel channel)
         {
-            List<UserConnection> userConnections = _connections.Values.ToList();
-            return userConnections;
+            var usersOnChannel = _usersByChannel[channel.Name].Remove(user);
+            var userObj = GetUser_Username(user.Username);
+            userObj.Channels.Remove(channel);
+            // Perhaps an update function versus all the other functions
+            return Task.CompletedTask;
+        }
+
+
+        public List<User> GetUsersOnChannel_List(Channel channel)
+        {
+            //List<UserConnection> connections = new();
+            //connections = _connectedUsers.Values
+            //    .Where(x=>x.Channel.Id == channel.Id && x.User.Id != 0)
+            //    .Distinct()
+            //    .ToList();
+            
+            return _usersByChannel[channel.Name];
+        }
+
+        public List<User> GetAllUsers_List()
+        {
+            return _connectedUsers.Values.ToList();
         }
 
         public bool IsUserLoggedIn(User user)
         {
-            List<UserConnection> connections = new();
-            connections = _connections.Values
-                .Where(x => x.User.IsPasswordValid == true && x.User.Username == user.Username)
+            var keys = _connectedUsers.Keys
+                .Where(x => x == user.Username)
                 .ToList();
                 //.Where(x => x.User.Username == user.Username);
-            if (connections.Count == 0) return false;
+            if (keys.Count == 0) return false;
             return true;
         }
     }

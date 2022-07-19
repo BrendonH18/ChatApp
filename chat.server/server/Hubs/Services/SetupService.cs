@@ -4,8 +4,8 @@ namespace server.Hubs.Services
 {
     public interface ISetupService
     {
-        public void StoreInitialConnectionData(string ConnectionId);
-        public UserConnection HandleLogout(UserConnection userConnection, string ConnectionId);
+        public void StoreInitialConnectionData(User user);
+        public UserConnection HandleLogout(UserConnection userConnection, string userName);
     }
 
     public class SetupService : ISetupService
@@ -19,16 +19,16 @@ namespace server.Hubs.Services
             _user = new User { Id = 0, IsPasswordValid = false, LoginType = "", Password = "", Username = "" };
             _channel = new Channel { Id = 0, Name = "" };
         }
-        public void StoreInitialConnectionData(string ConnectionId)
+        public void StoreInitialConnectionData(User user)
         {
-            if (_connectionService.GetUserConnection_UserConnection(ConnectionId) == null)
-                _connectionService.UpdateUserConnection_Void(ConnectionId, new UserConnection { Channel = _channel, User = _user });
+            //_connectionService.UpdateUserConnection_Void(user.Username, new UserConnection { User = new User() });
         }
         public UserConnection HandleLogout(UserConnection userConnection, string ConnectionId)
         {
-            userConnection.User = _user;
-            _connectionService.UpdateUserConnection_Void(ConnectionId, userConnection);
-            return userConnection;
+            //userConnection.User = _user;
+            //_connectionService.UpdateUserConnection_Void(ConnectionId, userConnection);
+            //return userConnection;
+            return new UserConnection();
         }
 
     }

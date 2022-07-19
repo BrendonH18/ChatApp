@@ -37,14 +37,14 @@ namespace Server.Tests
             {
                 User = user
             };
-            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.GetUser_Username(connectionId).Returns(userConnection);
             _connectionService.IsUserLoggedIn(user).Returns(false);
-            _queryService.CreateNewUser(user).Returns(user);
+            _queryService.HandleAddNewUser(user).Returns(user);
             _queryService.ReturnUserFromUsername(default).Returns(new User { Password = BCrypt.Net.BCrypt.HashPassword(userConnection.User.Password)});
 
             _sut.HandleReturnLoginAttempt(user, connectionId);
 
-            _queryService.Received(1).CreateNewUser(user);
+            _queryService.Received(1).HandleAddNewUser(user);
         }
 
         [Test]
@@ -60,14 +60,14 @@ namespace Server.Tests
             {
                 User = user
             };
-            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.GetUser_Username(connectionId).Returns(userConnection);
             _connectionService.IsUserLoggedIn(user).Returns(true);
-            _queryService.CreateNewUser(user).Returns(user);
+            _queryService.HandleAddNewUser(user).Returns(user);
             _queryService.ReturnUserFromUsername(default).Returns(new User { Password = BCrypt.Net.BCrypt.HashPassword(userConnection.User.Password) });
 
             _sut.HandleReturnLoginAttempt(user, connectionId);
 
-            _queryService.DidNotReceive().CreateNewUser(user);
+            _queryService.DidNotReceive().HandleAddNewUser(user);
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace Server.Tests
             { 
                 Password = BCrypt.Net.BCrypt.HashPassword(user1.Password)
             };
-            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.GetUser_Username(connectionId).Returns(userConnection);
             _queryService.ReturnUserFromUsername(userConnection.User.Username).Returns(user2);
 
             _sut.HandleUpdatePassword(user1, connectionId);
@@ -116,7 +116,7 @@ namespace Server.Tests
                 Password = BCrypt.Net.BCrypt.HashPassword("FALSE")
             };
 
-            _connectionService.GetUserConnection_UserConnection(connectionId).Returns(userConnection);
+            _connectionService.GetUser_Username(connectionId).Returns(userConnection);
             _queryService.ReturnUserFromUsername(userConnection.User.Username).Returns(user2);
 
             _sut.HandleUpdatePassword(user1, connectionId);

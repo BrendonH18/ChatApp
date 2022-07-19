@@ -4,25 +4,17 @@ namespace server.Models
 {
     public class UserConstants
     {
-        public static List<UserModel> Users = new List<UserModel>()
+        public static List<User> Users = new List<User>()
         {
-            new UserModel()
+            new User()
             {
-                UserName = "jason_admin",
-                EmailAddress = "jason.admin@gmail.com",
+                Username = "jason_admin",
                 Password = "MyPass_w0rd",
-                GivenName = "Jason",
-                Surname =  "Bryant",
-                Role = "Administrator"
             },
-            new UserModel()
+            new User()
             {
-                UserName = "brendon_seller",
-                EmailAddress = "brendon.seller@gmail.com",
+                Username = "brendon_seller",
                 Password = "MyPass_w0rd",
-                GivenName = "Brendon",
-                Surname =  "Hall",
-                Role = "Seller"
             }
         };
     }

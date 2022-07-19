@@ -16,5 +16,6 @@ namespace server.Models
         public virtual string LoginType { get; set; }
         public virtual bool IsPasswordValid { get; set; }
         public virtual string NewPassword { get; set; }
+        public List<Channel> Channels { get; set; }
     }
 }

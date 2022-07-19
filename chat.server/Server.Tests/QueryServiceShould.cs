@@ -41,9 +41,9 @@ namespace Server.Tests
         {
             var mockUser = new User();
 
-            _sut.CreateNewUser(mockUser);
+            _sut.HandleAddNewUser(mockUser);
 
-            _sut.Received().CreateNewUser(mockUser);
+            _sut.Received().HandleAddNewUser(mockUser);
         }
 
         [Test]
