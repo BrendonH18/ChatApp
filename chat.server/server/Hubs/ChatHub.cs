@@ -107,7 +107,7 @@ namespace server.Hubs
             List<Message> messages1 = _channelService.HandleCreateKnockMessages(user, enterChannel, exitChannel);
             messages1.ForEach(async m =>
             {
-                await SendMessageToChannel(m.Text, m.User, m.Channel, true);
+                await SendMessageToChannel(m);
             });
 
             await Clients.Caller.SendAsync("ReturnedChannel", enterChannel);
@@ -124,10 +124,10 @@ namespace server.Hubs
         }
 
 
-        public Task SendMessageToChannel(string text, User user, Channel channel, bool isBot = false)
+        public Task SendMessageToChannel(Message param)
         {
-            Message response = _channelService.HandleNewMessage(text, user, channel, isBot);
-            return Clients.Group(channel.Name).SendAsync("ReturnedMessage", response);
+            Message response = _channelService.HandleNewMessage(param);
+            return Clients.Group(param.Channel.Name).SendAsync("ReturnedMessage", response);
         }
 
         public void Logout()

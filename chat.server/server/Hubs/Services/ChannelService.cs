@@ -7,7 +7,7 @@ namespace server.Hubs.Services
     public interface IChannelService
     {
         public List<Message> HandleCreateKnockMessages(User userConnection, Channel enterChannel, Channel exitChannel);
-        public Message HandleNewMessage(string text, User user, Channel channel, bool isBot = false);
+        public Message HandleNewMessage(Message message);
         public Message FormatNewMessage(string text, User user, Channel channel, bool isBot = false);
     }
 
@@ -38,12 +38,12 @@ namespace server.Hubs.Services
             return messages;
         }
 
-        public Message HandleNewMessage(string text, User user, Channel channel, bool isBot = false)
+        public Message HandleNewMessage(Message message)
         {
-            Message response = FormatNewMessage(text, user, channel, isBot);
-            if (!isBot)
-                _queryService.InsertMessage(response);
-            return response;
+            message.FormatMessage();
+            if (!message.IsBot)
+                _queryService.InsertMessage(message);
+            return message;
         }
 
         public Message FormatNewMessage(string text, User user, Channel channel, bool isBot = false)

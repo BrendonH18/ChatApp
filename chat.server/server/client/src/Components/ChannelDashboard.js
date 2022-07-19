@@ -105,12 +105,15 @@ const handleMessageSubmitWithEnterKey = (e) => {
 }
 const handleSendMessage = (e) =>{
 	e.preventDefault()
-	if (!user.isPasswordValid) return setMessageText("Message blocked - Please login to send messages")
+	// if (!user.isPasswordValid) return setMessageText("Message blocked - Please login to send messages")
     const message = {
       text: messageText,
-      isBot: false
+	  user: user,
+	  channel: channel,
+      isBot: true
     }
 	setMessageText('')
+	console.log("Message: ", message)
     connection.send("SendMessageToChannel", message);
   }
 
@@ -254,7 +257,7 @@ const handleSendMessage = (e) =>{
 									<span className="input-group-text attach_section h-100">
 									</span>
 								</div>
-								<textarea name="" className="form-control type_msg" onKeyDown={e => handleMessageSubmitWithEnterKey(e)} disabled={!user.isPasswordValid} placeholder="Type your message..." onChange={e => handleMessageInput(e)} value={messageText}></textarea>
+								<textarea name="" className="form-control type_msg" onKeyDown={e => handleMessageSubmitWithEnterKey(e)} disabled={false} placeholder="Type your message..." onChange={e => handleMessageInput(e)} value={messageText}></textarea>
 								<div className="input-group-append">
 									{/* <input type="submit" onClick={e => console.log("SUBMIT")}/> */}
 									<button className="input-group-text send_btn h-100" onClick={e => handleSendMessage(e)}>

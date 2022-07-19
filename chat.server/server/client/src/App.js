@@ -13,35 +13,27 @@ function App() {
   const blankUser = {
     id: 0,
     username: "",
-    password: "",
     loginType: "",
-    isPasswordValid: false
   }
 
   const blankChannel = {
-    id: 0,
-    name: ""
+    id: 1,
+    name: "HelloChannelWorld"
   }
 
-  const [availableChannels, setAvailableChannels] = useState(null)
   const [channel, setChannel] = useLocalStorage('channel', blankChannel)
+  const [token, setToken] = useLocalStorage('token', 0)
+  const [user, setUser] = useLocalStorage('user', blankUser)
+
+  const [availableChannels, setAvailableChannels] = useState(null)
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
-  const [user, setUser] = useLocalStorage('user', blankUser)
   const [resetPassword, setResetPassword] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()
   const [isInitialLogin, setIsInitialLogin] = useState(true)
-  const [token, setToken] = useLocalStorage('token', 0)
-  const [count, setCount] = useLocalStorage('count', 0)
   
-  useEffect(()=>{
-    const newcount = count + 1
-    setCount(newcount)
-    console.log("Count", count)
-  },[token])
-
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
     .withUrl('/chat', { accessTokenFactory: () => token})
