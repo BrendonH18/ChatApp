@@ -61,12 +61,12 @@ namespace server.Hubs
             Clients.Caller.SendAsync("ReturnedJWTTest", Context.User.Identity.IsAuthenticated);
         }
 
+
         public Task ReturnStartUpValidation(User user)
         {
             if (!Context.User.Identity.IsAuthenticated)
                 return Clients.Caller.SendAsync("ReturnedStartUpValidation", false);
             var name = Context.User.Claims.Where(x => x.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value;
-            var claims = Context.User.Claims;
             if (user.Username != name)
                 return Clients.Caller.SendAsync("ReturnedStartUpValidation", false);
             return Clients.Caller.SendAsync("ReturnedStartUpValidation", true);
