@@ -82,7 +82,7 @@ namespace server.Hubs
         }
 
         //AUTHORIZE???
-        public async Task ChangeChannel(User user, Channel enterChannel, Channel exitChannel)
+        public async Task ChangeChannel(User user, Channel enterChannel, Channel exitChannel = null)
         {
             if (user == null) return;
             if (user.Username == null || user.Username.Length == 0) return;

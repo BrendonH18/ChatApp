@@ -110,7 +110,7 @@ const handleSendMessage = (e) =>{
       text: messageText,
 	  user: user,
 	  channel: channel,
-      isBot: true
+      isBot: true // update later
     }
 	setMessageText('')
 	console.log("Message: ", message)
