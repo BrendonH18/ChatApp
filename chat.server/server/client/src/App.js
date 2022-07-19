@@ -48,14 +48,14 @@ function App() {
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
-  },[token])
+  },[token, user])
 
   useEffect(() => {
     if(connection === null) return
     connection.start()
     .then(() => {
       const param = {
-        username: "jason_admin",
+        username: user?.username,
       }
       connection.on("ReturnedStartUpValidation", (param)=>console.log("Start Up:", param))
       connection.send("ReturnStartUpValidation", param)
@@ -65,6 +65,7 @@ function App() {
         if (param === "Reset") return setMessages([])
         setMessages(m => [...m, param]) 
       })
+      connection.on("ReturnedToken", (param) => setToken(param))
       connection.on("ReturnedUser", (param) => setUser(param))
       connection.on("ReturnedChannel", (param) => setChannel(param))
       connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))

@@ -40,12 +40,12 @@ const Home = ({ setToken, user, isInitialLogin, setIsInitialLogin, connection, f
     connection.send("ReturnJWTTest")
   }
 
-  useEffect(() => {
-    if(!user.isPasswordValid) return
-    if(!isInitialLogin) return
-    setIsInitialLogin(false)
-    navigate(`/Channel/${firstChannelId}`)
-  }, [user])
+  // useEffect(() => {
+  //   if(!user.isPasswordValid) return
+  //   if(!isInitialLogin) return
+  //   setIsInitialLogin(false)
+  //   navigate(`/Channel/${firstChannelId}`)
+  // }, [user])
 
   useEffect(() => {
     setMessages([])
