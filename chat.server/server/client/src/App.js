@@ -21,11 +21,17 @@ function App() {
     name: "HelloChannelWorld"
   }
 
+  const channel2 = {
+    id: 2,
+    name: "Yup"
+  }
+
   const [channel, setChannel] = useLocalStorage('channel', blankChannel)
   const [token, setToken] = useLocalStorage('token', 0)
   const [user, setUser] = useLocalStorage('user', blankUser)
 
-  const [availableChannels, setAvailableChannels] = useState(null)
+  // const [availableChannels, setAvailableChannels] = useState(null)
+  const [availableChannels, setAvailableChannels] = useState([blankChannel, channel2])
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])

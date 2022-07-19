@@ -82,35 +82,37 @@ namespace server.Hubs
         }
 
         //AUTHORIZE???
-        public async Task ChangeChannel(User user, Channel enterChannel, Channel exitChannel = null)
+        // User user, Channel enterChannel, Channel exitChannel = null
+        public async void ChangeChannel(ChangeChannelModel param)
         {
-            if (user == null) return;
-            if (user.Username == null || user.Username.Length == 0) return;
-            if (enterChannel == null) return;
-            if (enterChannel.Name.Length == 0) return;
+            if (param.User == null || param.enterChannel == null) return;
+            //if (user == null) return;
+            //if (user.Username == null || user.Username.Length == 0) return;
+            //if (enterChannel == null) return;
+            //if (enterChannel.Name.Length == 0) return;
 
-            List<Message> messages = _queryService.ReturnMessagesByChannel_List(enterChannel);
+            //List<Message> messages = _queryService.ReturnMessagesByChannel_List(enterChannel);
             
-            await Clients.Caller.SendAsync("ReturnedMessage", "Reset");
-            messages.ForEach(async m =>
-            {
-                await Clients.Caller.SendAsync("ReturnedMessage", m);
-            });
+            //await Clients.Caller.SendAsync("ReturnedMessage", "Reset");
+            //messages.ForEach(async m =>
+            //{
+            //    await Clients.Caller.SendAsync("ReturnedMessage", m);
+            //});
 
-            if (exitChannel != null) { 
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, exitChannel.Name);
-                await _connectionService.RemoveUserFromChannel(user, exitChannel);
-            }
-            await Groups.AddToGroupAsync(Context.ConnectionId, enterChannel.Name);
-            await _connectionService.AddUserToChannel(user, enterChannel);
+            //if (exitChannel != null) { 
+            //    await Groups.RemoveFromGroupAsync(Context.ConnectionId, exitChannel.Name);
+            //    await _connectionService.RemoveUserFromChannel(user, exitChannel);
+            //}
+            //await Groups.AddToGroupAsync(Context.ConnectionId, enterChannel.Name);
+            await _connectionService.AddUserToChannel(param.User, param.enterChannel);
 
-            List<Message> messages1 = _channelService.HandleCreateKnockMessages(user, enterChannel, exitChannel);
-            messages1.ForEach(async m =>
-            {
-                await SendMessageToChannel(m);
-            });
+            //List<Message> messages1 = _channelService.HandleCreateKnockMessages(user, enterChannel, exitChannel);
+            //messages1.ForEach(async m =>
+            //{
+            //    await SendMessageToChannel(m);
+            //});
 
-            await Clients.Caller.SendAsync("ReturnedChannel", enterChannel);
+            //await Clients.Caller.SendAsync("ReturnedChannel", enterChannel);
             //SendConnectedUsers();
 
             return;

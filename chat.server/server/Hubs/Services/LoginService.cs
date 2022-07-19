@@ -8,12 +8,13 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace server.Hubs.Services
 {
     public interface ILoginService
     {
-        public void HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token);
+        public Task HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token);
         public UpdatePasswordResponse HandleUpdatePassword(User user, string userName);
         public string CreateRandomUsername(string username);
         public bool IsValidPassword(string stringPassword, string hashPassword);
@@ -33,17 +34,18 @@ namespace server.Hubs.Services
             _setupService = setupService;
             _config = config;
         }
-        public void HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token)
+        public Task HandleReturnLoginAttempt(User user, out UserModel returnUser, out string token)
         {
 
             returnUser = new UserModel();
             token = String.Empty;
 
             if (_connectionService.IsUserLoggedIn(user))
-                return;
+                return Task.CompletedTask;
             CreateLoginResponse(user, ref returnUser, ref token);
-            _setupService.StoreInitialConnectionData(user); // Why not just one fuction "StoreConnectionData" ?
-            return;
+            if ( token.Length != 0 )_connectionService.AddUserToServer(user);
+            //_setupService.StoreInitialConnectionData(user); // Why not just one fuction "StoreConnectionData" ?
+            return Task.CompletedTask;
         }
 
         public UpdatePasswordResponse HandleUpdatePassword(User user, string connectionId)

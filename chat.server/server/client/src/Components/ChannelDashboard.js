@@ -136,12 +136,25 @@ const handleSendMessage = (e) =>{
   }, [connectedUsers])
 
   useEffect(() => {
-	if(!availableChannels) return
+	// if(!availableChannels) return
 	if(!connection) return
 	let id = 1;
-	if(parseInt(ActiveChannelID) !== 0 || typeof ActiveChannelID !== "undefined") id = parseInt(ActiveChannelID)
-	if(id === parseInt(channel.id)) return
-	connection.send("JoinChannel", availableChannels.find(x=> x.id === id))
+	// if(parseInt(ActiveChannelID) !== 0 || typeof ActiveChannelID !== "undefined") id = parseInt(ActiveChannelID)
+	// if(id === parseInt(channel.id)) return
+	const exit = {
+		name: "exit",
+		id: 2
+	}
+	const param = {
+		user: user,
+		enterChannel: {name: "enter", id: 1},
+		exitChannel: exit?.name.length == 0 ? null : exit
+	}
+	const empty = {}
+	console.log("Change Channel: ", param)
+	connection.send("ChangeChannel", param)
+
+	// connection.send("JoinChannel", availableChannels.find(x=> x.id === id))
   }, [ActiveChannelID, availableChannels])
 
     return(

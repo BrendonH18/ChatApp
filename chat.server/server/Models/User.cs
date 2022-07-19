@@ -17,5 +17,10 @@ namespace server.Models
         public virtual bool IsPasswordValid { get; set; }
         public virtual string NewPassword { get; set; }
         public virtual List<Channel> Channels { get; set; }
+
+        public User()
+        {
+            Channels = new List<Channel>();
+        }
     }
 }

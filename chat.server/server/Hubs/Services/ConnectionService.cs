@@ -7,13 +7,16 @@ namespace server.Hubs.Services
 {
     public interface IConnectionService
     {
-        public User GetUser_Username(string userName);
+        public Task GetUser_Username(string userName, out User user);
         public Task RemoveUserFromAll (User userName);
         public List<User> GetUsersOnChannel_List(Channel channel);
         public List<User> GetAllUsers_List();
         public bool IsUserLoggedIn(User user);
         public Task AddUserToChannel(User user, Channel channel);
         public Task RemoveUserFromChannel(User user, Channel channel);
+        public Task AddUserToServer(User user);
+        public Task RemoveUserFromServer(User user);
+
     }
     public class ConnectionService : IConnectionService
     {
@@ -32,10 +35,23 @@ namespace server.Hubs.Services
             //_connections.Remove(connectionId);
             return Task.CompletedTask;
         }
-        public User GetUser_Username (string userName)
+
+        public Task AddUserToServer(User user)
         {
-            _connectedUsers.TryGetValue(userName, out User user);
-            return user;
+            _connectedUsers.Add(user.Username, user);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveUserFromServer(User user)
+        {
+            _connectedUsers.Remove(user.Username);
+            return Task.CompletedTask;
+        }
+
+        public Task GetUser_Username (string userName, out User user)
+        {
+            _connectedUsers.TryGetValue(userName, out user);
+            return Task.CompletedTask;
         }
         //public List<UserConnection> GetConnectionsOnChannel(Channel channel)
         //{
@@ -46,18 +62,22 @@ namespace server.Hubs.Services
         //}
         public Task AddUserToChannel(User user, Channel channel)
         {
-            _usersByChannel[channel.Name].Add(user);
-            var userObj = GetUser_Username(user.Username);
-            userObj.Channels.Add(channel);
+            GetUser_Username(user.Username, out User objUser);
+            if (objUser == null) return Task.CompletedTask;
+            objUser.Channels.Add(channel);
+            var isKeyFound = _usersByChannel.ContainsKey(channel.Name);
+            if (!isKeyFound) _usersByChannel[channel.Name] = new List<User>();
+            _usersByChannel[channel.Name].Add(objUser);
             // Perhaps an update function versus all the other functions
             return Task.CompletedTask;
         }
 
         public Task RemoveUserFromChannel(User user, Channel channel)
         {
-            var usersOnChannel = _usersByChannel[channel.Name].Remove(user);
-            var userObj = GetUser_Username(user.Username);
-            userObj.Channels.Remove(channel);
+            GetUser_Username(user.Username, out User objUser);
+            if (objUser == null) return Task.CompletedTask;
+            objUser.Channels.Remove(channel);
+            _usersByChannel[channel.Name].Remove(objUser);
             // Perhaps an update function versus all the other functions
             return Task.CompletedTask;
         }
