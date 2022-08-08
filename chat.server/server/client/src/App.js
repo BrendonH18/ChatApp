@@ -6,6 +6,7 @@ import ChannelDashboard from './Components/ChannelDashboard';
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
 import { Offcanvas } from 'bootstrap';
+import useLocalStorage from './Components/useLocalStorage'
 
 function App() {
 
@@ -27,7 +28,7 @@ function App() {
   const [connectedUsers, setConnectedUsers] = useState(null)
   const [connection, setConnection] = useState(null)
   const [messages, setMessages] = useState([])
-  const [user, setUser] = useState(blankUser)
+  const [user, setUser] = useLocalStorage('user', blankUser)
   const [resetPassword, setResetPassword] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()

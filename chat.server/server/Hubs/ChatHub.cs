@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using NHibernate;
 using server.Hubs.Services;
 using server.Models;
@@ -15,11 +16,13 @@ namespace server.Hubs
         private readonly IQueryService _queryService;
         private readonly IChannelService _channelService;
         private readonly ISetupService _setupService;
+        private readonly IAuthenticationService _authenticationService;
 
-        public ChatHub(IConnectionService connectionService, ISessionFactory factory)
+        public ChatHub(IConnectionService connectionService, ISessionFactory factory, IConfiguration configuration)
         {
             
             _connectionService = connectionService;
+            _authenticationService = new AuthenticationService(configuration);
             _setupService = new SetupService(connectionService);
             _queryService = new QueryService(factory);
             _loginService = new LoginService(_queryService,connectionService, _setupService);
@@ -29,6 +32,7 @@ namespace server.Hubs
         public override Task OnConnectedAsync()
         {
             _setupService.StoreInitialConnectionData(Context.ConnectionId);
+
             return base.OnConnectedAsync();
         }
 
@@ -51,6 +55,7 @@ namespace server.Hubs
 
         public void ReturnLoginAttempt(User user)
         {
+            
             UserConnection response = _loginService.HandleReturnLoginAttempt(user, Context.ConnectionId);
             SendConnectedUsers();
             Clients.Caller.SendAsync("ReturnedUser", response.User);
