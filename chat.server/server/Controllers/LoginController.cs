@@ -23,6 +23,8 @@ namespace server.Controllers
             _config = config;
         }
 
+        // CREATE A NEW SERVICE
+
         [AllowAnonymous]
         [HttpPost]
         public IActionResult Login([FromBody] UserLogin userLogin)
@@ -31,8 +33,11 @@ namespace server.Controllers
             if (user == null)
                 return NotFound("User not found.");
             var token = Generate(user);
+
             return Ok(token);
         }
+
+        
 
         private string Generate(UserModel user)
         {

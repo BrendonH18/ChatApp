@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using NHibernate;
 using server.Hubs.Services;
 using server.Models;
@@ -17,11 +21,13 @@ namespace server.Hubs
         private readonly IChannelService _channelService;
         private readonly ISetupService _setupService;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IConfiguration _config;
 
         public ChatHub(IConnectionService connectionService, ISessionFactory factory, IConfiguration configuration)
         {
             
             _connectionService = connectionService;
+            _config = configuration;
             _authenticationService = new AuthenticationService(configuration);
             _setupService = new SetupService(connectionService);
             _queryService = new QueryService(factory);
@@ -55,11 +61,40 @@ namespace server.Hubs
 
         public void ReturnLoginAttempt(User user)
         {
-            
+            string jwt = Generate(user);
+            Clients.Caller.SendAsync("ReturnedJWT", jwt);
+
             UserConnection response = _loginService.HandleReturnLoginAttempt(user, Context.ConnectionId);
             SendConnectedUsers();
             Clients.Caller.SendAsync("ReturnedUser", response.User);
             Clients.Caller.SendAsync("ReturnedChannel", response.Channel);
+        }
+
+
+
+        public string Generate(User user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Username),
+                //new Claim(ClaimTypes.Email, user.EmailAddress),
+                //new Claim(ClaimTypes.GivenName, user.GivenName),
+                //new Claim(ClaimTypes.Surname, user.Surname),
+                //new Claim(ClaimTypes.Role, user.Role),
+            };
+
+            var token = new JwtSecurityToken(
+                _config["Jwt:Issuer"],
+                _config["Jwt:Audience"],
+                claims,
+                //expires: DateTime.Now.AddMinutes(15),
+                signingCredentials: credentials
+                );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         public async Task JoinChannel(Channel channel)

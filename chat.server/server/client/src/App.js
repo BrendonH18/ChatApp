@@ -33,16 +33,20 @@ function App() {
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [isPasswordUpdated, setIsPasswordUpdated] = useState()
   const [isInitialLogin, setIsInitialLogin] = useState(true)
+  const [jwt, setJwt] = useLocalStorage("jwt", "")
   
 
 
   useEffect(() => {
     const newConnection = new HubConnectionBuilder()
-    .withUrl('/chat')
+    .withUrl('/chat', {
+      accessTokenFactory: ()=> jwt
+    })
     .withAutomaticReconnect()
     .build();
     setConnection(newConnection)
-  },[])
+    console.log("JWT: ", jwt)
+  },[jwt])
 
   useEffect(() => {
     if(connection === null) return
@@ -52,6 +56,7 @@ function App() {
         if (param === "Reset") return setMessages([])
         setMessages(m => [...m, param]) 
       })
+      connection.on("ReturnedJWT", (param) => setJwt(param))
       connection.on("ReturnedUser", (param) => setUser(param))
       connection.on("ReturnedChannel", (param) => setChannel(param))
       connection.on("ReturnedAvailableChannels", (param) => setAvailableChannels( param ))
@@ -128,7 +133,7 @@ function App() {
   </div>
 </div>
         <Routes>
-          <Route path="/" element={<Home user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
+          <Route path="/" element={<Home setJwt={setJwt} jwt={jwt} user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
           <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>

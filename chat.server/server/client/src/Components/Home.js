@@ -3,9 +3,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {  useEffect, useState } from 'react';
 import {useNavigate} from 'react-router-dom'
+import axios from 'axios';
 
 
-const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
+const Home = ({ setJwt, jwt, user, isInitialLogin, setIsInitialLogin, connection, firstChannelId, setChannel, setMessages, blankChannel }) => {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -16,13 +17,24 @@ const Home = ({ user, isInitialLogin, setIsInitialLogin, connection, firstChanne
     e.preventDefault()
     if(!connection) return console.log("Not Connected")
     const user1 = {
-      username: username,
-      password: password,
+      Username: username,
+      Password: password,
       loginType: type
     }
     setUsername('')
     setPassword('')
-    connection.send("ReturnLoginAttempt", user1)
+    const authAxios = axios.create({
+      baseURL: "https://localhost:44314/",
+      headers: {
+        Authorization: `Bearer ${jwt}`
+      }
+    })
+    authAxios.post("api/login/", user1)
+    .then( res => {
+      if(res.status == 200) setJwt(res.data)
+    }
+    )
+    // connection.send("ReturnLoginAttempt", user1)
   }
 
   useEffect(() => {
