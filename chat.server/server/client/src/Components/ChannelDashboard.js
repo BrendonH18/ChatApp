@@ -2,9 +2,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPaperPlane, faSearch } from "@fortawesome/free-solid-svg-icons"
+import axios from 'axios'
 
 
-const ChannelDashboard = ({ user, channel, availableChannels, messages, connectedUsers, connection, firstChannelId}) => {
+const ChannelDashboard = ({ jwt, user, channel, availableChannels, messages, connectedUsers, connection, firstChannelId}) => {
 
 const [connectedUsersByChannelAndStatus, setConnectedUsersByChannelAndStatus] = useState(null)
 const [messageText, setMessageText] = useState('')
@@ -102,13 +103,21 @@ const handleMessageSubmitWithEnterKey = (e) => {
 }
 const handleSendMessage = (e) =>{
 	e.preventDefault()
-	if (!user.isPasswordValid) return setMessageText("Message blocked - Please login to send messages")
+	// if (!user.isPasswordValid) return setMessageText("Message blocked - Please login to send messages")
     const message = {
       text: messageText,
       isBot: false
     }
 	setMessageText('')
-    connection.send("SendMessageToChannel", message);
+	const authAxios = axios.create({
+		baseURL: "https://localhost:44314/",
+		headers: {
+			Authorization: `Bearer ${jwt}`
+		}
+	})
+	
+    authAxios.post("api/chat/sendmessage", message)
+	.then(res => console.log(res));
   }
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({behavior: "smooth"})

@@ -5,9 +5,12 @@ namespace server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class ChatController : ControllerBase
     {
-        [HttpGet("Public")]
+
+
+
+        [HttpPost("SendMessage")]
         public IActionResult Public()
         {
             return Ok("You're on public property");

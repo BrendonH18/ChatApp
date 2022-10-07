@@ -33,11 +33,10 @@ namespace server.Controllers
             if (user == null)
                 return NotFound("User not found.");
             var token = Generate(user);
-
             return Ok(token);
         }
-
         
+
 
         private string Generate(UserModel user)
         {

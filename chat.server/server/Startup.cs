@@ -47,17 +47,19 @@ namespace server
                         ValidAudience = Configuration["Jwt:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
                     };
-                    // ID as a Claim - Query Database for other information
-                    //options.Events = new JwtBearerEvents
-                    //{
-                    //    OnMessageReceived = context =>
-                    //    {
-                    //        var accessToken = context.Request.Query["access_token"];
-                    //        if (string.IsNullOrEmpty(accessToken) == false)
-                    //            context.Token = accessToken;
-                    //        return Task.CompletedTask;
-                    //    }
-                    //};
+                   
+                    //ID as a Claim - Query Database for other information
+
+                   options.Events = new JwtBearerEvents
+                   {
+                       OnMessageReceived = context =>
+                       {
+                           var accessToken = context.Request.Query["access_token"];
+                           if (string.IsNullOrEmpty(accessToken) == false)
+                               context.Token = accessToken;
+                           return Task.CompletedTask;
+                       }
+                   };
                 });
             services.AddMvc();
             services.AddControllers();
