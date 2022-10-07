@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { HubConnectionBuilder } from '@microsoft/signalr'
 import { useEffect, useState } from 'react';
 import ChannelDashboard from './Components/ChannelDashboard';
+import Chat from "./Components/Chat"
 import { BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
 import Home from './Components/Home';
 import { Offcanvas } from 'bootstrap';
@@ -137,7 +138,7 @@ function App() {
 </div>
         <Routes>
           <Route path="/" element={<Home setJwt={setJwt} jwt={jwt} user={user} channel={channel} setUser={setUser} connection={connection} isInitialLogin={isInitialLogin} setIsInitialLogin={setIsInitialLogin} firstChannelId={availableChannels?availableChannels[0]["id"]:1} setMessages={setMessages} setChannel={setChannel} blankChannel={blankChannel}/>}/>
-          <Route path="/Channel/:ActiveChannelID" element={<ChannelDashboard jwt={jwt} user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
+          <Route path="/Channel/:ActiveChannelID" element={<Chat jwt={jwt} user={user} channel={channel} availableChannels={availableChannels} messages={messages} connectedUsers={connectedUsers} connection={connection} />}/>
         </Routes>
       </Router>
     </>
