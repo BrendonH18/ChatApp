@@ -1,22 +1,18 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faSearch } from "@fortawesome/free-solid-svg-icons"
+
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import Body from "./Components/Body"
+import SearchBar from "./Components/SearchBar"
 
 
 
 const Channels = ({ connection, channel, availableChannels, ActiveChannelID, isConnectedUsersByChannelAndStatusTruthy, connectedUsersByChannelAndStatus}) => {
     const [search, setSearch] = useState("")
     const [trimChannels, setTrimChannels] = useState(availableChannels)
-    let navigate = useNavigate()
 
     const trimAvailableChannels = () => {
         if (search === "") return setTrimChannels(availableChannels)
         setTrimChannels( availableChannels.filter(ch => ch.name.toLowerCase().includes(search.toLowerCase())))
-    }
-
-    const handleChannelSelect = (channel) => {
-        navigate(`/Channel/${channel.id}`)
     }
 
     useEffect(trimAvailableChannels,[search, availableChannels])
@@ -33,44 +29,12 @@ const Channels = ({ connection, channel, availableChannels, ActiveChannelID, isC
     return <>
     <div className="card mb-sm-3 mb-md-0 contacts_card">
         <div className="card-header">
-            <div className="input-group">
-                <input type="text" placeholder="Search..." name="" className="form-control search" onChange={e => setSearch(e.target.value)} value={search}/>
-                <div className="input-group-prepend">
-                    <span className="input-group-text search_btn h-100">
-                        <FontAwesomeIcon icon={faSearch}/>
-                    </span>
-                </div>
-            </div>
+            <SearchBar setSearch={setSearch} search={search}/>
         </div>
         <div className="card-body contacts_body">
-            <ul className="contacts">
-                {trimChannels
-                    ? trimChannels.map(channel => 
-                        <li key={`channel-${channel.id}`} className={parseInt(ActiveChannelID)===parseInt(channel.id) ? "active" : ""} onClick={e => handleChannelSelect(channel)}>
-                            <div className="d-flex bd-highlight" >
-                                <div className="img_cont" >
-                                    <img src={channel.image
-                                        ? channel.image
-                                        : "https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"} className="rounded-circle user_img" />
-                                    {isConnectedUsersByChannelAndStatusTruthy()
-                                        ? <span className="online_icon offline"></span>
-                                        // ? <span className={connectedUsersByChannelAndStatus[channel.id]["Active"].length>0 ? "online_icon" : "online_icon offline"} ></span>
-                                        : <></>}
-                                </div>
-                                <div className="user_info" >
-                                    <span >{channel.name}</span>
-                                    {isConnectedUsersByChannelAndStatusTruthy()
-                                        ? <p> XX Connected</p>
-                                        // ? <p>{`${connectedUsersByChannelAndStatus[channel.id]["Active"].length} Connected`}</p>
-                                        : <></>}
-                                </div>
-                            </div>
-                        </li>
-                    )
-                    : <></>}
-            </ul>
+            <Body trimChannels={trimChannels} ActiveChannelID={ActiveChannelID} isConnectedUsersByChannelAndStatusTruthy={isConnectedUsersByChannelAndStatusTruthy} connectedUsersByChannelAndStatus={connectedUsersByChannelAndStatus}/>
         </div>
-        <div className="card-footer"></div>
+        <div className="card-footer"/>
     </div>
 </>
 }

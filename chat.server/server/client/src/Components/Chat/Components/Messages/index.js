@@ -3,6 +3,7 @@ import { faPaperPlane } from "@fortawesome/free-solid-svg-icons"
 import * as methods from "../../Methods"
 import { useEffect, useRef, useState } from "react"
 import axios from "axios"
+import BubbleLabel from "../Formatting/BubbleLabel"
 
 const Messages = ({channel, user, messages, jwt}) => {
 
@@ -43,23 +44,10 @@ const Messages = ({channel, user, messages, jwt}) => {
 
 return <>
     <div className="card">
-        <div className="card-header msg_head">
-            <div className="d-flex bd-highlight">
-                <div className="img_cont">
-                    <img src={channel.image
-                                ? channel.image
-                                : "https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"} className="rounded-circle user_img"/>
-                    <span className="online_icon"></span>
-                </div>
-                <div className="user_info">
-                    <span>{`Let's Chat: ${channel.name}`}</span>
-                    {messages
-                        ? <p>{`${messages.length} Message(s)`}</p>
-                        : <></>}
-                </div>
-            </div>
+        <div className="card-header">
+            <BubbleLabel image={channel.image} label={`Let's Chat: ${channel.name}`} subLabel={`${messages.length} Messages`} isOnline={true}/>
         </div>
-        <div className="card-body msg_card_body">
+        <div className="card-body scroll">
             {messages
                 ? messages.map(message => { return methods.formatMessage(message, user)})
                 : <></>}

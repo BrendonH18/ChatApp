@@ -20,7 +20,7 @@ body,html{
   overflow-y: auto;
   white-space: nowrap;
 }
-.msg_card_body{
+.scroll{
   overflow-y: auto;
 }
 .card-header{
@@ -208,9 +208,9 @@ body,html{
   font-size: 10px;
   white-space: nowrap;
 }
-.msg_head{
+/* .msg_head{
   position: relative;
-}
+} */
 #action_menu_btn{
   position: absolute;
   right: 10px;
