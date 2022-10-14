@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import Card from "../Formatting/Card"
 import Body from "./Components/Body"
 import SearchBar from "./Components/SearchBar"
 
@@ -27,16 +28,12 @@ const Channels = ({ connection, channel, availableChannels, ActiveChannelID, isC
       }, [ActiveChannelID, availableChannels])
     
     return <>
-    <div className="card mb-sm-3 mb-md-0 contacts_card">
-        <div className="card-header">
-            <SearchBar setSearch={setSearch} search={search}/>
-        </div>
-        <div className="card-body contacts_body">
-            <Body trimChannels={trimChannels} ActiveChannelID={ActiveChannelID} isConnectedUsersByChannelAndStatusTruthy={isConnectedUsersByChannelAndStatusTruthy} connectedUsersByChannelAndStatus={connectedUsersByChannelAndStatus}/>
-        </div>
-        <div className="card-footer"/>
-    </div>
-</>
+    <Card 
+        header={<SearchBar setSearch={setSearch} search={search}/>} 
+        body={<Body trimChannels={trimChannels} ActiveChannelID={ActiveChannelID} isConnectedUsersByChannelAndStatusTruthy={isConnectedUsersByChannelAndStatusTruthy} connectedUsersByChannelAndStatus={connectedUsersByChannelAndStatus}/>} 
+        specialFormat={{body: ["contacts_body"]}}
+        />
+    </>
 }
 
 export default Channels

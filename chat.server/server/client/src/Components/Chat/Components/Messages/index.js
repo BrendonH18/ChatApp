@@ -4,6 +4,7 @@ import * as methods from "../../Methods"
 import { useEffect, useRef, useState } from "react"
 import axios from "axios"
 import BubbleLabel from "../Formatting/BubbleLabel"
+import Card from "../Formatting/Card"
 
 const Messages = ({channel, user, messages, jwt}) => {
 
@@ -42,18 +43,17 @@ const Messages = ({channel, user, messages, jwt}) => {
 
     useEffect(scrollToBottom, [messages])
 
-return <>
-    <div className="card">
-        <div className="card-header">
-            <BubbleLabel image={channel.image} label={`Let's Chat: ${channel.name}`} subLabel={`${messages.length} Messages`} isOnline={true}/>
-        </div>
-        <div className="card-body scroll">
-            {messages
+    const Body = () => {
+        return <>
+        {messages
                 ? messages.map(message => { return methods.formatMessage(message, user)})
                 : <></>}
-            <div ref={messagesEndRef}/>
-        </div >
-        <div className="card-footer">
+        <div ref={messagesEndRef}/>
+        </>
+    }
+
+    const Footer = () => {
+        return <>
             <div className="input-group">
                 <div className="input-group-append">
                     <span className="input-group-text attach_section h-100">
@@ -71,8 +71,16 @@ return <>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
+        </>
+    }
+
+return <>
+    <Card
+        header={<BubbleLabel image={channel.image} label={`Let's Chat: ${channel.name}`} subLabel={`${messages.length} Messages`} isOnline={true}/>}
+        body={Body()}
+        footer={Footer()}
+        specialFormat={{body: ["scroll"]}}
+        />
 </>
 }
 
